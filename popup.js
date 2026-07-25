@@ -335,11 +335,10 @@
     var isCustom = Math.abs(inp.rate - 1.0) >= 0.01;
     var effectiveOD = getEffectiveOD();
 
-    $('col-dt').style.display = isCustom ? 'none' : '';
-    $('col-ht').style.display = isCustom ? 'none' : '';
+    $('col-dt').style.visibility = isCustom ? 'hidden' : 'visible';
+    $('col-ht').style.visibility = isCustom ? 'hidden' : 'visible';
     $('nm-head').textContent = isCustom ? '' : 'NM';
     $('nm-rate').textContent = inp.rate.toFixed(2) + 'x';
-    $('mod-cols').style.gridTemplateColumns = isCustom ? '1fr' : '1fr 1fr 1fr';
 
     var mods = [
       { pref: 'nm', mod: [], rate: 1.0 },
@@ -485,6 +484,7 @@
         $('status').textContent = 'Open a beatmap page first';
         $('map-name').textContent = 'No beatmap detected';
         $('map-artist').textContent = '';
+        $('map-mapper').textContent = '';
         $('map-tier-line').textContent = '';
       }
     });
@@ -495,7 +495,8 @@
     lastBeatmapId = md.beatmapId;
     $('map-name').textContent = md.title || ('Beatmap #' + md.beatmapId);
     $('map-tier-line').textContent = md.subTitle || '';
-    $('map-artist').textContent = md.artist || '';
+    $('map-artist').textContent = md.artist ? 'by ' + md.artist : '';
+    $('map-mapper').textContent = md.mapper ? 'mapped by ' + md.mapper : '';
     if (!activeMods._judgmentsDirty) {
       $('j-320').value = md.totalNotes || 0;
     }

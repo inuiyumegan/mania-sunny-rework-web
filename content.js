@@ -178,8 +178,10 @@
   }
 
   function getMapTitle() {
-    var el = document.querySelector('.beatmapset-header__details-text--title');
+    var el = document.querySelector('.beatmapset-header__details-text--title .beatmapset-header__details-text-link');
     if (el) return el.textContent.trim();
+    el = document.querySelector('.beatmapset-header__details-text--title');
+    if (el) return el.textContent.replace(/\s*不良内容\s*|\s*NSFW\s*|\s*聚光灯\s*|\s*Spotlight\s*/gi, '').trim();
     el = document.querySelector('.beatmapset-header__details-text');
     if (el) return el.textContent.trim();
     return '';
@@ -214,6 +216,22 @@
       return artist.trim();
     }
     el = document.querySelector('[class*="artist"]');
+    if (el) return el.textContent.trim();
+    return '';
+  }
+
+  function getMapper() {
+    var el = document.querySelector('.beatmapset-header__details-text--mapper');
+    if (el) {
+      var mapper = '';
+      for (var i = 0; i < el.childNodes.length; i++) {
+        if (el.childNodes[i].nodeType === 3) mapper += el.childNodes[i].textContent;
+      }
+      var t = mapper.trim();
+      if (t.toLowerCase().startsWith('mapped by ')) t = t.slice(10);
+      return t;
+    }
+    el = document.querySelector('.beatmapset-mapper__name');
     if (el) return el.textContent.trim();
     return '';
   }
@@ -274,6 +292,7 @@
       var title = getMapTitle();
       var diffName = getDifficultyName();
       var artist = getArtist();
+      var mapper = getMapper();
       var stats = analyzeMap(parser);
       var isSupKeys = stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7;
       var tier = { label: '' };
@@ -338,7 +357,8 @@
           diffLabel: tier.label,
           title: headerTitle,
           subTitle: headerSub,
-          artist: artist
+          artist: artist,
+          mapper: mapper
         }
       }, function () {
         var pp = computeSunnyPP(sr, od, 100, 0, [], stats.totalNotes, variety, accScalar);

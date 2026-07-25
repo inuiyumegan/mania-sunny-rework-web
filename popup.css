@@ -13,18 +13,21 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root, html, body { background: var(--bg) !important; }
+
 body {
-  width: 500px; max-height: 650px; overflow-y: auto;
-  background: var(--bg); color: var(--text);
+  width: 500px; overflow: hidden;
+  color: var(--text);
   font-family: 'Torus', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 13px; line-height: 1.35;
 }
 
-#root { padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
+#root { padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; max-height: 650px; overflow-y: auto; }
 
 .header { display: flex; flex-direction: column; gap: 1px; }
 .title { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .map-artist { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-mapper { font-size: 10px; color: var(--accent-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .map-tier-line { font-size: 13px; color: var(--accent); font-weight: 600; white-space: nowrap; }
 
 .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; }
