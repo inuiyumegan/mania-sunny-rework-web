@@ -36,15 +36,12 @@
 ## 算法参考
 
 - [Sunny Rework](https://github.com/sunnyxxy/Star-Rating-Rebirth) — 核心星数算法
+   - [@sunnyxxy](https://github.com/sunnyxxy)
 - [Daniel](https://github.com/TheBagelOfMan/Daniel) — 4K RC 段位估算
+   - [@TheBagelOfMan](https://github.com/TheBagelOfMan)
 - [osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser) — RC/LN 段位映射参考
+   - [@LeoBlackMT](https://github.com/LeoBlackMT)和我自己
 
 ## License
 
 MIT
-
-## 鸣谢
-
-- [@sunnyxxy](https://github.com/sunnyxxy) — Sunny Rework 原始算法
-- [@TheBagelOfMan](https://github.com/TheBagelOfMan) — Daniel 段位算法
-- [@LeoBlackMT](https://github.com/LeoBlackMT) — osumania_map_analyser 段位映射
