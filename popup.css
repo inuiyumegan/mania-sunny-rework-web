@@ -147,5 +147,8 @@ body {
 .stat-input:disabled { color: var(--text-muted); opacity: 0.6; }
 
 .footer { display: flex; justify-content: space-between; align-items: center; }
+.footer-right { display: flex; align-items: center; gap: 6px; }
+.github-link { color: var(--text-muted); opacity: 0.5; display: flex; align-items: center; transition: opacity 0.15s; }
+.github-link:hover { opacity: 0.9; color: var(--text); }
 .status { font-size: 10px; color: var(--text-muted); }
 .version { font-size: 10px; color: var(--text-muted); opacity: 0.4; }

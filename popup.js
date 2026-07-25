@@ -335,9 +335,6 @@
     var isCustom = Math.abs(inp.rate - 1.0) >= 0.01;
     var effectiveOD = getEffectiveOD();
 
-    $('col-dt').style.visibility = isCustom ? 'hidden' : 'visible';
-    $('col-ht').style.visibility = isCustom ? 'hidden' : 'visible';
-    $('nm-head').textContent = isCustom ? '' : 'NM';
     $('nm-rate').textContent = inp.rate.toFixed(2) + 'x';
 
     var mods = [
