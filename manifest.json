@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Sunny Rework PP",
+  "version": "2.0.0",
+  "description": "Sunny Rework star rating and PP calculator for osu! beatmap pages.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Sunny Rework PP",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://osu.ppy.sh/beatmapsets/*",
+        "https://osu.ppy.sh/b/*",
+        "https://osu.ppy.sh/beatmaps/*"
+      ],
+      "js": ["src/math-utils.js", "src/osu-parser.js", "src/algorithm.js", "src/daniel-algorithm.js", "src/osu-sr-calculator.js", "src/map-analyzer.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://osu.ppy.sh/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["Torus-Regular.otf"],
+      "matches": ["https://osu.ppy.sh/*"]
+    }
+  ]
+}
