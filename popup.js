@@ -322,9 +322,10 @@
   }
 
   function getEffectiveOD() {
-    var v = parseFloat($('stat-od').value);
+    var raw = $('stat-od').value;
+    var v = parseFloat(raw);
     var maxOD = activeMods.SV2 ? 15 : 10;
-    return isNaN(v) ? (mapData ? mapData.od || 8 : 8) : Math.min(maxOD, Math.max(0, v));
+    return isNaN(v) ? 0 : Math.min(maxOD, Math.max(0, v));
   }
 
   function updateAll() {
@@ -497,10 +498,11 @@
     if (!activeMods._judgmentsDirty) {
       $('j-320').value = md.totalNotes || 0;
     }
-    $('stat-od').value = md.od || 8;
+    if (!activeMods._odDirty) {
+      $('stat-od').value = md.od || 8;
+    }
     $('status').textContent = 'Ready';
     $('algo-bar').style.display = md.columnCount === 4 ? 'flex' : 'none';
-    activeMods._odDirty = false;
     updateAll();
   }
   function initInputs() {
@@ -514,12 +516,18 @@
         }
         if (e.target.id === 'pp-rate') highlightPreset(parseFloat(e.target.value) || 1.0);
         if (e.target.id === 'stat-od') {
-          var v = parseFloat(e.target.value);
-          var maxOD = activeMods.SV2 ? 15 : 10;
-          if (isNaN(v)) e.target.value = mapData ? (mapData.od || 8) : 8;
-          else e.target.value = Math.min(maxOD, Math.max(0, v)).toFixed(1);
+          var raw = e.target.value;
           activeMods._odDirty = true;
-          scheduleOdRecalc(parseFloat(e.target.value));
+          if (raw === '' || raw === '.') { scheduleOdRecalc(0); debounceUpdate(); return; }
+          var v = parseFloat(raw);
+          var maxOD = activeMods.SV2 ? 15 : 10;
+          if (!isNaN(v)) {
+            v = Math.min(maxOD, Math.max(0, v));
+            if (String(v) !== raw) e.target.value = String(v);
+            scheduleOdRecalc(v);
+          } else {
+            scheduleOdRecalc(0);
+          }
         }
         debounceUpdate();
       });
