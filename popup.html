@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sunny Rework PP</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div id="root">
+  <div class="header">
+    <span id="map-name" class="title">--</span>
+    <span id="map-artist" class="map-artist">--</span>
+    <span id="map-mapper" class="map-mapper">--</span>
+    <span id="map-tier-line" class="map-tier-line">--</span>
+  </div>
+
+  <div class="section inputs-section">
+    <div class="sec-label">Judgments</div>
+    <div class="judge-grid">
+      <label class="judge">320 <input type="number" id="j-320" class="input-xs" value="0" step="1"></label>
+      <label class="judge">300 <input type="number" id="j-300" class="input-xs" value="0" step="1"></label>
+      <label class="judge">200 <input type="number" id="j-200" class="input-xs" value="0" step="1"></label>
+      <label class="judge">100 <input type="number" id="j-100" class="input-xs" value="0" step="1"></label>
+      <label class="judge">50 <input type="number" id="j-50" class="input-xs" value="0" step="1"></label>
+      <label class="judge">0 <input type="number" id="j-0" class="input-xs" value="0" step="1"></label>
+    </div>
+    <div class="acc-mods-line">
+      <span class="acc-label">Acc</span>
+      <span id="pp-acc-display" class="acc-val">100.00%</span>
+      <span class="sec-label mods-label">Mods</span>
+      <button class="mod-tog active" id="mod-sv1" data-mod="SV1">V1</button>
+      <button class="mod-tog" id="mod-sv2" data-mod="SV2">V2</button>
+      <button class="mod-tog" id="mod-nf" data-mod="NF">NF</button>
+      <button class="mod-tog" id="mod-ez" data-mod="EZ">EZ</button>
+      <button class="mod-tog" id="mod-ho" data-mod="HO">HO</button>
+      <button class="mod-tog" id="mod-in" data-mod="IN">IN</button>
+    </div>
+
+    <div class="sec-divider"></div>
+    <div class="sec-label">Speed</div>
+    <div class="speed-row">
+      <button id="rate-minus" class="btn-rate">-</button>
+      <input type="number" id="pp-rate" value="1.00" min="0.5" max="2.0" step="0.01">
+      <span class="rate-x">x</span>
+      <button id="rate-plus" class="btn-rate">+</button>
+      <button class="preset-btn" data-rate="0.6">0.6</button>
+      <button class="preset-btn" data-rate="0.7">0.7</button>
+      <button class="preset-btn" data-rate="0.8">0.8</button>
+      <button class="preset-btn" data-rate="0.9">0.9</button>
+      <button class="preset-btn" data-rate="1.0">1.0</button>
+      <button class="preset-btn" data-rate="1.1">1.1</button>
+      <button class="preset-btn" data-rate="1.2">1.2</button>
+      <button class="preset-btn" data-rate="1.3">1.3</button>
+      <button class="preset-btn" data-rate="1.4">1.4</button>
+    </div>
+  </div>
+
+  <div class="algo-bar" id="algo-bar">
+    <button class="algo-btn active" data-algo="auto">Auto</button>
+    <button class="algo-btn" data-algo="daniel">Daniel</button>
+    <button class="algo-btn" data-algo="sunny">Sunny</button>
+  </div>
+
+  <div class="mod-cols" id="mod-cols">
+    <div class="mod-col" id="col-dt">
+      <div class="mod-head">DT</div>
+      <div class="mod-rate">1.50x</div>
+      <div class="mod-sr" id="dt-sr">--</div>
+      <div class="mod-tier" id="dt-tier"></div>
+      <div class="mod-pp-row">
+        <span class="mod-pp" id="dt-pp">--</span>
+        <span class="mod-pptag">Sunny</span>
+      </div>
+      <div class="mod-pp-row mod-pp2">
+        <span class="mod-pp osu-pp" id="dt-pp-osu">--</span>
+        <span class="mod-pptag osu-tag">Lazer</span>
+      </div>
+      <div class="mod-diff" id="dt-diff-badge">--</div>
+    </div>
+    <div class="mod-col nm-col" id="col-nm">
+      <div class="mod-head" id="nm-head">NM</div>
+      <div class="mod-rate" id="nm-rate">1.00x</div>
+      <div class="mod-sr" id="nm-sr">--</div>
+      <div class="mod-tier" id="nm-tier"></div>
+      <div class="mod-pp-row">
+        <span class="mod-pp" id="nm-pp">--</span>
+        <span class="mod-pptag">Sunny</span>
+      </div>
+      <div class="mod-pp-row mod-pp2">
+        <span class="mod-pp osu-pp" id="nm-pp-osu">--</span>
+        <span class="mod-pptag osu-tag">Lazer</span>
+      </div>
+      <div class="mod-diff" id="nm-diff-badge">--</div>
+    </div>
+    <div class="mod-col" id="col-ht">
+      <div class="mod-head">HT</div>
+      <div class="mod-rate">0.75x</div>
+      <div class="mod-sr" id="ht-sr">--</div>
+      <div class="mod-tier" id="ht-tier"></div>
+      <div class="mod-pp-row">
+        <span class="mod-pp" id="ht-pp">--</span>
+        <span class="mod-pptag">Sunny</span>
+      </div>
+      <div class="mod-pp-row mod-pp2">
+        <span class="mod-pp osu-pp" id="ht-pp-osu">--</span>
+        <span class="mod-pptag osu-tag">Lazer</span>
+      </div>
+      <div class="mod-diff" id="ht-diff-badge">--</div>
+    </div>
+  </div>
+
+  <div class="section stats-section">
+    <div class="stats-grid">
+      <div class="stat-item"><span class="stat-label">Notes</span><span class="stat-value" id="stat-notes">--</span></div>
+      <div class="stat-item"><span class="stat-label">LN%</span><span class="stat-value" id="stat-lnpct">--</span></div>
+      <div class="stat-item"><span class="stat-label">OD</span><input type="number" id="stat-od" class="stat-input" value="8" min="0" max="10" step="0.1"></div>
+      <div class="stat-item"><span class="stat-label">HP</span><span class="stat-value" id="stat-hp">--</span></div>
+      <div class="stat-item"><span class="stat-label">Keys</span><span class="stat-value" id="stat-keys">--</span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="status" id="status">Ready</span>
+    <div class="footer-right">
+      <a class="github-link" href="https://github.com/inuiyumegan/mania-sunny-rework-web" target="_blank" title="GitHub">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <span class="version">v0.5</span>
+    </div>
+  </div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,7 +1,37 @@
-__pycache__/
-*.pyc
-*.pyo
-*.exe
-*.pdf
+# Node modules
+node_modules/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+
+# Build / dist
+dist/
+build/
+*.zip
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Package lock files (optional, uncomment if needed)
+# package-lock.json
+# yarn.lock
