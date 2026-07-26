@@ -32,6 +32,7 @@
   ];
 
   var GREEK_CODE = { A:'α',B:'β',G:'γ',D:'δ',E:'ε',Z:'ζ',H:'η',Q:'θ' };
+  // Note: 'A' is Alpha (α) in 4K/6K, but Azimuth (ψ) in 7K — both use 'A' as code
   var K7_GREEK = { G:'γ', A:'ψ', Z:'ζ', S:'★' };
   var INTRO_MAP = { I1:'intro 1', I2:'intro 2', I3:'intro 3' };
 
@@ -78,17 +79,21 @@
     return baseStr;
   }
 
+  function lookup(sr, table, keys) {
+    for (var i = 0; i < table.length; i++) {
+      if (sr >= table[i][0] && sr <= table[i][1]) return formatTier(table[i][2], keys);
+    }
+    if (sr < table[0][0]) return '<' + formatTier(table[0][2], keys);
+    return '>' + formatTier(table[table.length - 1][2], keys);
+  }
+
   function rcLookup(sr, keys) {
     var table;
     if (keys === 4) table = RC4K_TABLE;
     else if (keys === 6) table = RC6K_TABLE;
     else if (keys === 7) table = RC7K_TABLE;
     else return '';
-    for (var i = 0; i < table.length; i++) {
-      if (sr >= table[i][0] && sr <= table[i][1]) return formatTier(table[i][2], keys);
-    }
-    if (sr < table[0][0]) return '<' + formatTier(table[0][2], keys);
-    return '>' + formatTier(table[table.length - 1][2], keys);
+    return lookup(sr, table, keys);
   }
 
   var RC6K_TABLE = [
@@ -124,7 +129,7 @@
 
   var LN4K_TABLE = [
     [4.832,4.898,"L5"],[4.898,4.963,"L5mh"],[4.963,5.095,"L5h"],
-    [5.095,5.160,"L6l"],[5.143,5.160,"L6ml"],[5.160,5.213,"L6"],[5.213,5.264,"L6mh"],[5.264,5.314,"L6h"],
+    [5.095,5.143,"L6l"],[5.143,5.160,"L6ml"],[5.160,5.213,"L6"],[5.213,5.264,"L6mh"],[5.264,5.314,"L6h"],
     [5.314,5.446,"L7l"],[5.446,5.521,"L7ml"],[5.521,5.577,"L7"],[5.577,5.631,"L7mh"],[5.631,5.686,"L7h"],
     [5.686,5.740,"L8l"],[5.740,5.794,"L8ml"],[5.794,5.853,"L8"],[5.853,5.917,"L8mh"],[5.917,5.981,"L8h"],
     [5.981,6.044,"L9l"],[6.044,6.108,"L9ml"],[6.108,6.175,"L9"],[6.175,6.246,"L9mh"],[6.246,6.318,"L9h"],
@@ -143,8 +148,8 @@
     [4.470,4.658,"L1l"],[4.658,4.846,"L1ml"],[4.846,4.974,"L1"],[4.974,5.042,"L1mh"],[5.042,5.110,"L1h"],
     [5.110,5.178,"L2l"],[5.178,5.246,"L2ml"],[5.246,5.294,"L2"],[5.294,5.322,"L2mh"],[5.322,5.350,"L2h"],
     [5.350,5.378,"L3l"],[5.378,5.406,"L3ml"],[5.406,5.513,"L3"],[5.513,5.699,"L3mh"],[5.699,5.885,"L3h"],
-    [5.885,6.071,"L4l"],[6.071,6.257,"L4ml"],[6.257,6.347,"L4"],[6.347,6.341,"L4mh"],[6.341,6.335,"L4h"],
-    [6.335,6.329,"L5l"],[6.329,6.323,"L5ml"],[6.323,6.371,"L5"],[6.371,6.473,"L5mh"],[6.473,6.575,"L5h"],
+    [5.885,6.071,"L4l"],[6.071,6.257,"L4ml"],[6.257,6.335,"L4"],[6.335,6.341,"L4mh"],[6.341,6.347,"L4h"],
+    [6.347,6.353,"L5l"],[6.353,6.359,"L5ml"],[6.359,6.371,"L5"],[6.371,6.473,"L5mh"],[6.473,6.575,"L5h"],
     [6.575,6.677,"L6l"],[6.677,6.779,"L6ml"],[6.779,6.840,"L6"],[6.840,6.860,"L6mh"],[6.860,6.880,"L6h"],
     [6.880,6.900,"L7l"],[6.900,6.920,"L7ml"],[6.920,6.973,"L7"],[6.973,7.059,"L7mh"],[7.059,7.145,"L7h"],
     [7.145,7.231,"L8l"],[7.231,7.317,"L8ml"],[7.317,7.366,"L8"],[7.366,7.378,"L8mh"],[7.378,7.390,"L8h"],
@@ -177,11 +182,7 @@
     else if (keys === 6) table = LN6K_TABLE;
     else if (keys === 7) table = LN7K_TABLE;
     else return '';
-    for (var i = 0; i < table.length; i++) {
-      if (sr >= table[i][0] && sr <= table[i][1]) return formatTier(table[i][2], keys);
-    }
-    if (sr < table[0][0]) return '<' + formatTier(table[0][2], keys);
-    return '>' + formatTier(table[table.length - 1][2], keys);
+    return lookup(sr, table, keys);
   }
 
   function $(id) { return document.getElementById(id); }
@@ -198,7 +199,7 @@
     return srNM * rate;
   }
 
-  function computeSunnyPP(sr, od, accuracy, miss, mods, totalNotes, variety, accScalar, isHO, isIN) {
+  function computeSunnyPP(sr, accuracy, mods, totalNotes, variety, accScalar, isHO, isIN) {
     // Real Sunny Rework PP formula from ManiaPerformanceCalculator.cs
     var acc = Math.min(1, Math.max(0, (accuracy || 100) / 100));
     var modsStr = mods ? mods.join('') : '';
@@ -278,7 +279,7 @@
 
     var rate = parseFloat($('pp-rate').value) || 1.0;
     rate = Math.min(2.0, Math.max(0.5, rate));
-    return { acc: acc, miss: miss, rate: rate };
+    return { acc: acc, rate: rate };
   }
 
   function updateCol(pref, sr, sunnyPP, officialPP, sunnyPP100, tier, osuSR) {
@@ -297,8 +298,9 @@
       }
     }
 
-    ppEl.innerHTML = '<span style="color:' + srColor(sunnyPP.pp / 6) + ';font-weight:700;">' + formatPP(sunnyPP.pp) + ' / ' + formatPP(sunnyPP100.pp) + '</span>pp';
-    ppOsuEl.innerHTML = '<span style="color:' + srColor(officialPP / 6) + ';font-weight:700;">' + formatPP(officialPP) + '</span>pp';
+    var ppColor = function(v) { return v >= 800 ? '#ff6b6b' : v >= 400 ? '#ffd93d' : v >= 100 ? '#6bcb77' : '#4d96ff'; };
+    ppEl.innerHTML = '<span style="color:' + ppColor(sunnyPP.pp) + ';font-weight:700;">' + formatPP(sunnyPP.pp) + ' / ' + formatPP(sunnyPP100.pp) + '</span>pp';
+    ppOsuEl.innerHTML = '<span style="color:' + ppColor(officialPP) + ';font-weight:700;">' + formatPP(officialPP) + '</span>pp';
     if (osuSR) {
       ppOsuEl.innerHTML += ' <span style="font-size:8px;color:#555;">' + osuSR.toFixed(2) + '\u2605</span>';
     }
@@ -311,14 +313,15 @@
 
   function getAlgoSR(srSuffix) {
     if (!mapData) return 0;
-    if (activeAlgo === 'daniel') return mapData['danielSR' + srSuffix] || mapData['sr' + srSuffix] || 0;
-    if (activeAlgo === 'sunny') return mapData['sr' + srSuffix] || 0;
-    if (mapData.columnCount === 4) {
-      var d = mapData['danielSR' + srSuffix];
-      var dNM = mapData.danielSR;
-      if (d && d > 0 && dNM >= 6.36) return d;
-    }
-    return mapData['sr' + srSuffix] || 0;
+    var ho = activeMods.HO, inMod = activeMods.IN;
+    var sunnyKey = ho ? 'srHO' + srSuffix : inMod ? 'srIN' + srSuffix : 'sr' + srSuffix;
+    var danielKey = 'danielSR' + srSuffix;
+    var sunnyVal = mapData[sunnyKey] || mapData['sr' + srSuffix] || 0;
+    var danielVal = mapData[danielKey] || 0;
+    if (activeAlgo === 'daniel') return danielVal || sunnyVal;
+    if (activeAlgo === 'sunny') return sunnyVal;
+    if (mapData.columnCount === 4 && danielVal > 0 && mapData.danielSR >= 6.36) return danielVal;
+    return sunnyVal;
   }
 
   function getEffectiveOD() {
@@ -334,8 +337,6 @@
     var inp = getInputs();
     var n = mapData.totalNotes || 0;
     var isCustom = Math.abs(inp.rate - 1.0) >= 0.01;
-    var effectiveOD = getEffectiveOD();
-
     $('nm-rate').textContent = inp.rate.toFixed(2) + 'x';
 
     var mods = [
@@ -344,6 +345,7 @@
       { pref: 'ht', mod: ['HT'], rate: 0.75 }
     ];
 
+    var nmSR = 0;
     for (var i = 0; i < mods.length; i++) {
       var m = mods[i];
       if (isCustom && i > 0) continue;
@@ -353,52 +355,43 @@
       var allMods = gameMods.concat(extraMods);
       var ho = activeMods.HO;
       var inMod = activeMods.IN;
-      var sunnyNM = ho ? (mapData.srHO || mapData.sr) : (inMod ? (mapData.srIN || mapData.sr) : mapData.sr);
-      var sunnyDT = ho ? (mapData.srHO_DT || mapData.sr_DT) : (inMod ? (mapData.srIN_DT || mapData.sr_DT) : mapData.sr_DT);
-      var sunnyHT = ho ? (mapData.srHO_HT || mapData.sr_HT) : (inMod ? (mapData.srIN_HT || mapData.sr_HT) : mapData.sr_HT);
+      // SR display always uses Sunny algorithm; algorithm selection (auto/daniel/sunny)
+      // only affects tier lookup via getAlgoSR below — intentional design.
+      var sunnyNM = ho ? (mapData.srHO != null ? mapData.srHO : mapData.sr) : (inMod ? (mapData.srIN != null ? mapData.srIN : mapData.sr) : mapData.sr);
+      var sunnyDT = ho ? (mapData.srHO_DT != null ? mapData.srHO_DT : mapData.sr_DT) : (inMod ? (mapData.srIN_DT != null ? mapData.srIN_DT : mapData.sr_DT) : mapData.sr_DT);
+      var sunnyHT = ho ? (mapData.srHO_HT != null ? mapData.srHO_HT : mapData.sr_HT) : (inMod ? (mapData.srIN_HT != null ? mapData.srIN_HT : mapData.sr_HT) : mapData.sr_HT);
       var sr = estimateSR(sunnyNM, sunnyDT, sunnyHT, r);
-      var osuNM = ho ? (mapData.osuSR_HO || mapData.osuSR) : (inMod ? (mapData.osuSR_IN || mapData.osuSR) : (mapData.osuSR || sunnyNM));
-      var osuDT = ho ? (mapData.osuSR_HO_DT || mapData.osuSR_DT) : (inMod ? (mapData.osuSR_IN_DT || mapData.osuSR_DT) : (mapData.osuSR_DT || sunnyDT));
-      var osuHT = ho ? (mapData.osuSR_HO_HT || mapData.osuSR_HT) : (inMod ? (mapData.osuSR_IN_HT || mapData.osuSR_HT) : (mapData.osuSR_HT || sunnyHT));
+      if (i === 0) nmSR = sr;
+      var osuNM = ho ? (mapData.osuSR_HO != null ? mapData.osuSR_HO : mapData.osuSR) : (inMod ? (mapData.osuSR_IN != null ? mapData.osuSR_IN : mapData.osuSR) : (mapData.osuSR != null ? mapData.osuSR : sunnyNM));
+      var osuDT = ho ? (mapData.osuSR_HO_DT != null ? mapData.osuSR_HO_DT : mapData.osuSR_DT) : (inMod ? (mapData.osuSR_IN_DT != null ? mapData.osuSR_IN_DT : mapData.osuSR_DT) : (mapData.osuSR_DT != null ? mapData.osuSR_DT : sunnyDT));
+      var osuHT = ho ? (mapData.osuSR_HO_HT != null ? mapData.osuSR_HO_HT : mapData.osuSR_HT) : (inMod ? (mapData.osuSR_IN_HT != null ? mapData.osuSR_IN_HT : mapData.osuSR_HT) : (mapData.osuSR_HT != null ? mapData.osuSR_HT : sunnyHT));
       var osuSR = estimateSR(osuNM, osuDT, osuHT, r);
       var effLnRatio = inMod ? (mapData.lnRatioIN || 1) : (ho ? (mapData.lnRatioHO || 0) : (mapData.lnRatio || 0));
       var hasLN = effLnRatio >= 0.15;
       var keySup = mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7;
       var rcSR, lnSR, tier = '';
       if (keySup) {
+        var tierNM, tierDT, tierHT;
         if (hasLN) {
-          var rcHO = mapData.srHO || mapData.sr;
-          var rcHO_DT = mapData.srHO_DT || mapData.sr_DT;
-          var rcHO_HT = mapData.srHO_HT || mapData.sr_HT;
-          rcSR = estimateSR(rcHO, rcHO_DT, rcHO_HT, r);
-          if (ho) {
-          } else if (inMod) {
-            var inNM = mapData.srIN || mapData.sr;
-            var inDT = mapData.srIN_DT || mapData.sr_DT;
-            var inHT = mapData.srIN_HT || mapData.sr_HT;
-            lnSR = estimateSR(inNM, inDT, inHT, r);
-          } else {
-            lnSR = estimateSR(mapData.sr, mapData.sr_DT, mapData.sr_HT, r);
-          }
+          tierNM = mapData.srHO != null ? mapData.srHO : getAlgoSR('');
+          tierDT = mapData.srHO_DT != null ? mapData.srHO_DT : getAlgoSR('_DT');
+          tierHT = mapData.srHO_HT != null ? mapData.srHO_HT : getAlgoSR('_HT');
         } else {
-          var algoNM, algoDT, algoHT;
-          if (ho) {
-            algoNM = mapData.srHO || mapData.sr; algoDT = mapData.srHO_DT || mapData.sr_DT; algoHT = mapData.srHO_HT || mapData.sr_HT;
-          } else if (inMod) {
-            algoNM = mapData.srIN || mapData.sr; algoDT = mapData.srIN_DT || mapData.sr_DT; algoHT = mapData.srIN_HT || mapData.sr_HT;
-          } else {
-            algoNM = getAlgoSR(''); algoDT = getAlgoSR('_DT'); algoHT = getAlgoSR('_HT');
-          }
-          rcSR = estimateSR(algoNM, algoDT, algoHT, r);
+          tierNM = getAlgoSR('');
+          tierDT = getAlgoSR('_DT');
+          tierHT = getAlgoSR('_HT');
         }
+        rcSR = estimateSR(tierNM, tierDT, tierHT, r);
         tier = rcLookup(rcSR, mapData.columnCount);
-        if (hasLN && lnSR) {
+        if (hasLN) {
+          var lnNM = getAlgoSR(''), lnDT = getAlgoSR('_DT'), lnHT = getAlgoSR('_HT');
+          lnSR = estimateSR(lnNM, lnDT, lnHT, r);
           var lnTier = lnLookup(lnSR, mapData.columnCount);
           if (lnTier) tier += ' | ' + lnTier;
         }
       }
-      var sunny = computeSunnyPP(sr, effectiveOD, inp.acc, inp.miss, allMods, mapData.totalNotes, mapData.variety, mapData.accScalar, ho, inMod);
-      var sunny100 = computeSunnyPP(sr, effectiveOD, 100, 0, allMods, mapData.totalNotes, mapData.variety, mapData.accScalar, ho, inMod);
+      var sunny = computeSunnyPP(sr, inp.acc, allMods, mapData.totalNotes, mapData.variety, mapData.accScalar, ho, inMod);
+      var sunny100 = computeSunnyPP(sr, 100, allMods, mapData.totalNotes, mapData.variety, mapData.accScalar, ho, inMod);
       var official = computeOfficialPP(osuSR, inp.acc, n, allMods);
       updateCol(m.pref, sr, sunny, official, sunny100, tier, osuSR);
     }
@@ -406,14 +399,24 @@
     $('stat-notes').textContent = mapData.totalNotes || '--';
     var effLn = inMod ? (mapData.lnRatioIN || 1) : (ho ? (mapData.lnRatioHO || 0) : (mapData.lnRatio || 0));
     $('stat-lnpct').textContent = ((effLn || 0) * 100).toFixed(1) + '%';
-    var odVal = mapData.od || 8;
-    var hpVal = mapData.hp || 8;
+    var odVal = mapData.od >= 0 ? mapData.od : 8;
+    var hpVal = mapData.hp >= 0 ? mapData.hp : 8;
     var activeGameMods = getActiveMods();
     if (activeGameMods.indexOf('EZ') >= 0) { odVal = (odVal * 0.5).toFixed(1); hpVal = (hpVal * 0.5).toFixed(1); }
     if (!activeMods._odDirty) { $('stat-od').value = odVal; }
     $('stat-hp').textContent = hpVal;
     $('stat-keys').textContent = mapData.columnCount + 'K';
     $('pp-acc-display').textContent = inp.acc.toFixed(2) + '%';
+
+    // LN difficulty inversion warning for 6K LN maps below 5th dan
+    var warnEl = $('ln-warning');
+    var is6KLN = mapData.columnCount === 6 && (mapData.lnRatio || 0) >= 0.15;
+    if (is6KLN && nmSR < 7.5 && nmSR > 0) {
+      warnEl.textContent = '\u26A0 6K LN tier may invert vs actual difficulty \u2014 for reference only';
+      warnEl.style.display = '';
+    } else {
+      warnEl.style.display = 'none';
+    }
     } catch(e) { console.error('[Sunny] updateAll error:', e); }
   }
 
@@ -495,11 +498,11 @@
     $('map-tier-line').textContent = md.subTitle || '';
     $('map-artist').textContent = md.artist ? 'by ' + md.artist : '';
     $('map-mapper').textContent = md.mapper ? 'mapped by ' + md.mapper : '';
-    if (!activeMods._judgmentsDirty) {
+    if (activeMods._judgmentsDirty !== true) {
       $('j-320').value = md.totalNotes || 0;
     }
     if (!activeMods._odDirty) {
-      $('stat-od').value = md.od || 8;
+      $('stat-od').value = md.od >= 0 ? md.od : 5;
     }
     $('status').textContent = 'Ready';
     $('algo-bar').style.display = md.columnCount === 4 ? 'flex' : 'none';
@@ -518,15 +521,13 @@
         if (e.target.id === 'stat-od') {
           var raw = e.target.value;
           activeMods._odDirty = true;
-          if (raw === '' || raw === '.') { scheduleOdRecalc(0); debounceUpdate(); return; }
+          if (raw === '' || raw === '.') { debounceUpdate(); return; }
           var v = parseFloat(raw);
           var maxOD = activeMods.SV2 ? 15 : 10;
           if (!isNaN(v)) {
             v = Math.min(maxOD, Math.max(0, v));
             if (String(v) !== raw) e.target.value = String(v);
             scheduleOdRecalc(v);
-          } else {
-            scheduleOdRecalc(0);
           }
         }
         debounceUpdate();
@@ -627,12 +628,14 @@
           $('mod-sv2').classList.toggle('active', activeMods.SV2);
           if (activeMods.SV2) {
             $('stat-od').max = 15;
+            $('stat-od').setAttribute('max', '15');
             activeMods._odDirty = true;
           } else {
             $('stat-od').max = 10;
+            $('stat-od').setAttribute('max', '10');
             var currentV = parseFloat($('stat-od').value);
             if (isNaN(currentV) || currentV > 10) {
-              $('stat-od').value = Math.min(10, mapData ? (mapData.od || 8) : 8);
+              $('stat-od').value = Math.min(10, mapData ? (mapData.od >= 0 ? mapData.od : 8) : 8);
             }
             activeMods._odDirty = true;
           }

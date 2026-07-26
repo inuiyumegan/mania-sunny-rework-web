@@ -157,4 +157,5 @@ body {
 .github-link { color: var(--text-muted); opacity: 0.5; display: flex; align-items: center; transition: opacity 0.15s; }
 .github-link:hover { opacity: 0.9; color: var(--text); }
 .status { font-size: 10px; color: var(--text-muted); }
+.ln-warning { font-size: 9px; color: var(--accent-dim); text-align: center; padding: 3px 8px; line-height: 1.3; }
 .version { font-size: 10px; color: var(--text-muted); opacity: 0.4; }

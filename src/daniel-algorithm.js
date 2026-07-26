@@ -1,3 +1,4 @@
+var computeDanielSR = (function () {
 function bsl(arr, t) { var l=0,r=arr.length; while(l<r){var m=(l+r)>>1;if(arr[m]<t)l=m+1;else r=m;} return l; }
 function bsr(arr, t) { var l=0,r=arr.length; while(l<r){var m=(l+r)>>1;if(arr[m]<=t)l=m+1;else r=m;} return l; }
 function csum(x, f) { var F=new Float64Array(x.length); for(var i=1;i<x.length;i++)F[i]=F[i-1]+f[i-1]*(x[i]-x[i-1]); return F; }
@@ -13,7 +14,11 @@ function stepI(newX,oldX,oldV){var o=new Float64Array(newX.length),idx=0;
  for(var i=0;i<newX.length;i++){var x=newX[i];while(idx+1<oldX.length&&oldX[idx+1]<=x)idx++;o[i]=oldV[Math.max(0,Math.min(idx,oldV.length-1))];}return o;}
 function rescaleH(sr){return sr<=9?sr:9+(sr-9)*(1/1.2);}
 
-function computeDanielSR(columns, noteStarts, noteEnds, noteTypes, columnCount, speedRate) {
+// Daniel 4K RC algorithm by TheBagelOfMan (https://github.com/TheBagelOfMan/Daniel)
+// IMPORTANT: By design, this algorithm treats all notes as single taps (rice).
+// Long notes (LNs) are NOT treated differently — only note start times are used,
+// note end times and types are ignored. This is intentional for RC (rice) tier estimation.
+return function computeDanielSR(columns, noteStarts, noteEnds, noteTypes, columnCount, speedRate) {
   speedRate = speedRate || 1.0;
   if (columnCount !== 4) return -3;
   var K = 4;
@@ -59,13 +64,14 @@ function computeDanielSR(columns, noteStarts, noteEnds, noteTypes, columnCount, 
 
   var ac=baseC.map(function(_,i){var a=[];for(var k3=0;k3<K;k3++)if(ku[k3][i])a.push(k3);return a;});
 
-  // keyUsage400
+  // keyUsage400 — aligned with algorithm.js getKeyUsage400
   var ku4 = {0:new Float64Array(baseC.length),1:new Float64Array(baseC.length),2:new Float64Array(baseC.length),3:new Float64Array(baseC.length)};
-  for (var i5=0;i5<noteSeq.length;i5++){var k4=noteSeq[i5][0],h4=noteSeq[i5][1];
-   var li4=bsl(baseC,h4-400),ci=bsl(baseC,h4),ri4=bsl(baseC,h4+400);
-   if(ci>=0&&ci<baseC.length)ku4[k4][ci]+=3.75;
-   for(var idx2=li4;idx2<ci;idx2++)ku4[k4][idx2]+=3.75-(3.75/160000)*Math.pow(baseC[idx2]-h4,2);
-   for(var idx3=ci+1;idx3<ri4;idx3++)ku4[k4][idx3]+=3.75-(3.75/160000)*Math.pow(baseC[idx3]-h4,2);}
+  for (var i5=0;i5<noteSeq.length;i5++){var k4=noteSeq[i5][0],h4=noteSeq[i5][1],t4=0;
+   var li4=bsl(baseC,h4-400),li=bsl(baseC,h4),ri=bsl(baseC,t4<0?h4:t4),ri4=bsl(baseC,(t4<0?h4:t4)+400);
+   if(li>=ri){ri=bsl(baseC,h4+1);}
+   for(var idx2=li;idx2<ri;idx2++)ku4[k4][idx2]+=3.75;
+   for(var idx3=li4;idx3<li;idx3++)ku4[k4][idx3]+=3.75-(3.75/160000)*Math.pow(baseC[idx3]-h4,2);
+   for(var idx4=ri;idx4<ri4;idx4++)ku4[k4][idx4]+=3.75-(3.75/160000)*Math.pow(baseC[idx4]-(t4<0?h4:t4),2);}
 
   // anchor
   var anchor = new Float64Array(baseC.length);
@@ -171,4 +177,5 @@ function computeDanielSR(columns, noteStarts, noteEnds, noteTypes, columnCount, 
   sr*=noteSeq.length/(noteSeq.length+60);
   sr=rescaleH(sr)*0.975;
   return sr;
-}
+};
+})();

@@ -22,11 +22,11 @@ function preprocessParsedData(p, mod) {
     let t = p[4][i] === 128 ? p[3][i] : -1;
 
     if (mod === 'DT') {
-      h = Math.floor(h * 2 / 3);
-      t = t >= 0 ? Math.floor(t * 2 / 3) : t;
+      h = Math.round(h * 2 / 3);
+      t = t >= 0 ? Math.round(t * 2 / 3) : t;
     } else if (mod === 'HT') {
-      h = Math.floor(h * 4 / 3);
-      t = t >= 0 ? Math.floor(t * 4 / 3) : t;
+      h = Math.round(h * 4 / 3);
+      t = t >= 0 ? Math.round(t * 4 / 3) : t;
     }
 
     noteSeq.push([p[1][i], h, t]);
@@ -478,6 +478,7 @@ function computeAbar(K, T, x, noteSeqByColumn, activeColumns, deltas, ACorners, 
 function computeRbar(K, T, x, noteSeqByColumn, tailSeq, baseCorners) {
   const iArr = new Array(baseCorners.length).fill(0);
   const rStep = new Array(baseCorners.length).fill(0);
+  if (tailSeq.length < 2) return smoothOnCorners(baseCorners, rStep, 500, 0.001, 'sum');
 
   const timesByColumn = {};
   for (let i = 0; i < noteSeqByColumn.length; i++) {
@@ -678,8 +679,6 @@ function calculateCore(pre) {
   const weightedMean = Math.pow(num / den, 1 / 5);
 
   let SR = (0.88 * percentile93) * 0.25 + (0.94 * percentile83) * 0.2 + weightedMean * 0.55;
-  SR = Math.pow(SR, 1.0) / Math.pow(8, 1.0) * 8;
-
   let totalNotes = 0;
   for (const n of noteSeq) {
     let contrib = 1;
@@ -720,6 +719,7 @@ function computeSwitches(noteSeq, tailSeq, allCorners, ksArr, weights) {
     headGaps.push(heads[i + 1] - heads[i]);
   }
 
+  // TODO O(n×k) sliding window — replace with running prefix sum
   const numHeadGaps = headGaps.length;
   const avgs = [];
   for (let i = 0; i < numHeadGaps; i++) {
@@ -805,6 +805,7 @@ function raoQuadraticEntropyLog(values, logIterations) {
     return acc;
   }
 
+  // WARNING: O(n²) on unique values — for dense beatmaps where unique ≈ n, this is O(n²)
   let Q = 0;
   for (let i = 0; i < unique.length; i++) {
     for (let j = 0; j < unique.length; j++) {

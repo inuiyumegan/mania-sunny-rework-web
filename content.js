@@ -1,14 +1,11 @@
 (function () {
   'use strict';
-
-  var fontUrl = chrome.runtime.getURL('Torus-Regular.otf');
-  var fontStyle = document.createElement('style');
-  fontStyle.textContent = '@font-face{font-family:Torus;src:url(' + fontUrl + ') format("opentype");font-weight:400}';
-  document.head.appendChild(fontStyle);
+  console.log('[SunnyRework] content script loaded');
 
   var CONTAINER_ID = 'sunny-sr-badge';
   var lastBeatmapId = null;
   var calculating = false;
+  var _extInvalidated = false;
 
   function getBeatmapId() {
     var url = window.location.href;
@@ -28,7 +25,7 @@
     return '#4d96ff';
   }
 
-  function computeSunnyPP(sr, od, accuracy, miss, mods, totalNotes, variety, accScalar) {
+  function computeSunnyPP(sr, accuracy, mods, totalNotes, variety, accScalar) {
     // Real Sunny Rework PP formula from ManiaPerformanceCalculator.cs
     var acc = Math.min(1, Math.max(0, (accuracy || 100) / 100));
     var modsStr = mods ? mods.join('') : '';
@@ -150,7 +147,7 @@
     var color = srColor(sr);
     var isSup = keys === 4 || keys === 6 || keys === 7;
     var tierHtml = (tierLabel && isSup) ? '<span class="sunny-sr-tier" style="color:' + color + ';">' + tierLabel + '</span>' : '';
-    var keysHtml = isSup ? '<span class="sunny-sr-tier" style="color:' + color + ';">' + keys + 'K</span>' : '';
+    var keysHtml = isSup ? '<span class="sunny-sr-keys" style="color:' + color + ';">' + keys + 'K</span>' : '';
     var ppRounded = pp > 10 ? Math.round(pp) : pp.toFixed(1);
     badge.innerHTML =
       tierHtml +
@@ -236,11 +233,24 @@
     return '';
   }
 
+  function ensureFont() {
+    if (!document.getElementById('sunny-font-injected')) {
+      var s = document.createElement('style');
+      s.id = 'sunny-font-injected';
+      s.textContent = '@font-face{font-family:Torus;src:url(' + chrome.runtime.getURL('Torus-Regular.otf') + ') format("opentype");font-weight:400}';
+      document.head.appendChild(s);
+    }
+  }
+
   async function calculateAndStore(beatmapId) {
     if (calculating) return;
+    if (beatmapId === lastBeatmapId) return;
+    if (_extInvalidated) return;
     calculating = true;
+    lastBeatmapId = beatmapId;
 
     try {
+      ensureFont();
       var fileContent = await fetchOsuFile(beatmapId);
 
       var parser = new OsuParser(fileContent);
@@ -253,9 +263,10 @@
       }
 
       var parsedData = parser.getParsedData();
-      var od = parser.od > 0 ? parser.od : 8;
-      var hp = parser.hp > 0 ? parser.hp : 8;
+      var od = parser.od >= 0 ? parser.od : 5;
+      var hp = parser.hp >= 0 ? parser.hp : 5;
 
+      // Base: compute NM, DT, HT (3 Sunny runs). DT/HT ratios derived for HO/IN below.
       var srResult = calculateFromParsed(parsedData, 'NM');
       var sr = srResult.sr;
       var srDT = calculateFromParsed(parsedData, 'DT').sr;
@@ -264,6 +275,9 @@
       var accScalar = 0.5 * srResult.spikiness + 0.5 * srResult.switches;
       var spikiness = srResult.spikiness;
       var switches = srResult.switches;
+      var dtRatio = sr > 0 ? srDT / sr : 1.0;
+      var htRatio = sr > 0 ? srHT / sr : 1.0;
+
       var osuSR = computeOsuSRFromParsed(parsedData, 'NM');
       var osuSR_DT = computeOsuSRFromParsed(parsedData, 'DT');
       var osuSR_HT = computeOsuSRFromParsed(parsedData, 'HT');
@@ -271,22 +285,26 @@
       var danielSR_DT = computeDanielSR(parser.columns, parser.noteStarts, parser.noteEnds, parser.noteTypes, parser.columnCount, 1.5);
       var danielSR_HT = computeDanielSR(parser.columns, parser.noteStarts, parser.noteEnds, parser.noteTypes, parser.columnCount, 0.75);
 
-       var hoContent = applyHO(fileContent);
+      // HO: only NM run (saves 2 Sunny runs). DT/HT derived from base ratio.
+      var hoContent = applyHO(fileContent);
       var hoParser = new OsuParser(hoContent);
       hoParser.process();
       var hoParsed = hoParser.getParsedData();
       var hoStats = analyzeMap(hoParser);
       var srHO, srHO_DT, srHO_HT, osuSR_HO, osuSR_HO_DT, osuSR_HO_HT, hoVariety, hoAccScalar;
-      try { var hoRes = calculateFromParsed(hoParsed, 'NM'); srHO = hoRes.sr; hoVariety = hoRes.variety; hoAccScalar = 0.5 * hoRes.spikiness + 0.5 * hoRes.switches; srHO_DT = calculateFromParsed(hoParsed, 'DT').sr; srHO_HT = calculateFromParsed(hoParsed, 'HT').sr; } catch(e) { srHO = sr; srHO_DT = srDT; srHO_HT = srHT; hoVariety = variety; hoAccScalar = accScalar; }
+      try { var hoRes = calculateFromParsed(hoParsed, 'NM'); srHO = hoRes.sr; hoVariety = hoRes.variety; hoAccScalar = 0.5 * hoRes.spikiness + 0.5 * hoRes.switches; } catch(e) { console.warn('[SunnyRework] HO calc failed, fallback to NM:', e); srHO = sr; hoVariety = variety; hoAccScalar = accScalar; }
+      srHO_DT = srHO * dtRatio; srHO_HT = srHO * htRatio;
       try { osuSR_HO = computeOsuSRFromParsed(hoParsed, 'NM'); osuSR_HO_DT = computeOsuSRFromParsed(hoParsed, 'DT'); osuSR_HO_HT = computeOsuSRFromParsed(hoParsed, 'HT'); } catch(e) { osuSR_HO = osuSR; osuSR_HO_DT = osuSR_DT; osuSR_HO_HT = osuSR_HT; }
 
+      // IN: only NM run (saves 2 Sunny runs). DT/HT derived.
       var inContent = applyIN(fileContent);
       var inParser = new OsuParser(inContent);
       inParser.process();
       var inParsed = inParser.getParsedData();
       var inStats = analyzeMap(inParser);
       var srIN, srIN_DT, srIN_HT, osuSR_IN, osuSR_IN_DT, osuSR_IN_HT, inVariety, inAccScalar;
-      try { var inRes = calculateFromParsed(inParsed, 'NM'); srIN = inRes.sr; inVariety = inRes.variety; inAccScalar = 0.5 * inRes.spikiness + 0.5 * inRes.switches; srIN_DT = calculateFromParsed(inParsed, 'DT').sr; srIN_HT = calculateFromParsed(inParsed, 'HT').sr; } catch(e) { srIN = sr; srIN_DT = srDT; srIN_HT = srHT; inVariety = variety; inAccScalar = accScalar; }
+      try { var inRes = calculateFromParsed(inParsed, 'NM'); srIN = inRes.sr; inVariety = inRes.variety; inAccScalar = 0.5 * inRes.spikiness + 0.5 * inRes.switches; } catch(e) { console.warn('[SunnyRework] IN calc failed, fallback to NM:', e); srIN = sr; inVariety = variety; inAccScalar = accScalar; }
+      srIN_DT = srIN * dtRatio; srIN_HT = srIN * htRatio;
       try { osuSR_IN = computeOsuSRFromParsed(inParsed, 'NM'); osuSR_IN_DT = computeOsuSRFromParsed(inParsed, 'DT'); osuSR_IN_HT = computeOsuSRFromParsed(inParsed, 'HT'); } catch(e) { osuSR_IN = osuSR; osuSR_IN_DT = osuSR_DT; osuSR_IN_HT = osuSR_HT; }
 
       var title = getMapTitle();
@@ -299,11 +317,12 @@
       if (isSupKeys) {
         var hasLN = stats.lnRatio >= 0.15;
         // RC tier: for LN maps use HO SR (match popup behavior)
+        var DANIEL_THRESHOLD = 6.36;
         var rcSR = sr;
         if (stats.columnCount === 4) {
-          rcSR = (danielSR >= 6.36) ? danielSR : sr;
+          rcSR = (danielSR >= DANIEL_THRESHOLD) ? danielSR : sr;
         }
-        if (hasLN) rcSR = srHO || sr;
+        if (hasLN) rcSR = srHO != null ? srHO : sr;
         var rcTier = getRCTier(rcSR, stats.columnCount);
         if (rcTier) {
           tier.label = rcTier;
@@ -321,13 +340,12 @@
       }
 
       hideBadge();
-
       chrome.storage.local.set({
         sunnyMapData: {
           beatmapId: beatmapId,
-          fileContent: fileContent,
-          hoFileContent: hoContent,
-          inFileContent: inContent,
+          parsed: parsedData,
+          hoParsed: hoParsed,
+          inParsed: inParsed,
           sr: sr, sr_DT: srDT, sr_HT: srHT,
           srHO: srHO, srHO_DT: srHO_DT, srHO_HT: srHO_HT,
           srIN: srIN, srIN_DT: srIN_DT, srIN_HT: srIN_HT,
@@ -361,13 +379,18 @@
           mapper: mapper
         }
       }, function () {
-        var pp = computeSunnyPP(sr, od, 100, 0, [], stats.totalNotes, variety, accScalar);
+        var pp = computeSunnyPP(sr, 100, [], stats.totalNotes, variety, accScalar);
         showBadge(sr, pp.pp, tier.label, stats.columnCount);
         chrome.runtime.sendMessage({ type: 'dataReady', beatmapId: beatmapId }).catch(function() {});
       });
     } catch (err) {
+      if (err.message && err.message.includes('Extension context invalidated')) {
+        _extInvalidated = true;
+        return;
+      }
       console.error('[SunnyRework] error:', err);
       hideBadge();
+      lastBeatmapId = null;
     }
 
     calculating = false;
@@ -376,57 +399,67 @@
   function checkAndRun() {
     var beatmapId = getBeatmapId();
     if (!beatmapId) { hideBadge(); lastBeatmapId = null; return; }
-    if (beatmapId === lastBeatmapId) return;
-    lastBeatmapId = beatmapId;
     calculateAndStore(beatmapId);
   }
 
-  function watchPage() {
-    window.addEventListener('hashchange', checkAndRun);
-    window.addEventListener('popstate', checkAndRun);
+  var _pollTimer = null;
 
-    var lastUrl = location.href;
-    new MutationObserver(function () {
-      if (location.href !== lastUrl) {
-        lastUrl = location.href;
-        hideBadge();
-        lastBeatmapId = null;
-        checkAndRun();
-      }
-    }).observe(document.body, { childList: true, subtree: true });
-
-    setInterval(function () {
-      if (location.href !== lastUrl) {
-        lastUrl = location.href;
-        hideBadge();
-        lastBeatmapId = null;
-        checkAndRun();
-      }
-    }, 2000);
-  }
-
-  watchPage();
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkAndRun);
-  } else {
+  function onUrlChanged() {
+    hideBadge();
+    lastBeatmapId = null;
     checkAndRun();
   }
 
-  function recalcOd(content, odOverride) {
-    var parser = new OsuParser(content);
-    parser.process();
-    var d = parser.getParsedData();
+  function pollBeatmap() {
+    var beatmapId = getBeatmapId();
+    if (beatmapId) calculateAndStore(beatmapId);
+  }
+
+  function startPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(pollBeatmap, 500);
+  }
+
+  window.addEventListener('hashchange', onUrlChanged);
+  window.addEventListener('popstate', onUrlChanged);
+  document.addEventListener('turbo:load', onUrlChanged);
+
+  var observer = new MutationObserver(function () {
+    var id = getBeatmapId();
+    if (id && id !== lastBeatmapId) onUrlChanged();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true, attributes: false });
+
+  startPolling();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', pollBeatmap);
+  } else {
+    pollBeatmap();
+  }
+
+  var _lastUrl = window.location.href;
+  function watchUrl() {
+    var cur = window.location.href;
+    if (cur !== _lastUrl) { _lastUrl = cur; onUrlChanged(); }
+    requestAnimationFrame(watchUrl);
+  }
+  requestAnimationFrame(watchUrl);
+
+  function recalcOd(parsed, odOverride) {
+    var d = parsed.slice();
     d[5] = odOverride;
-    var res = calculateFromParsed(d, 'NM');
+    var resNM = calculateFromParsed(d, 'NM');
+    var resDT = calculateFromParsed(d, 'DT');
+    var resHT = calculateFromParsed(d, 'HT');
     return {
-      sr: res.sr,
-      srDT: calculateFromParsed(d, 'DT').sr,
-      srHT: calculateFromParsed(d, 'HT').sr,
-      variety: res.variety,
-      spikiness: res.spikiness,
-      switches: res.switches,
-      accScalar: 0.5 * res.spikiness + 0.5 * res.switches
+      sr: resNM.sr,
+      srDT: resDT.sr,
+      srHT: resHT.sr,
+      variety: resNM.variety,
+      spikiness: resNM.spikiness,
+      switches: resNM.switches,
+      accScalar: 0.5 * resNM.spikiness + 0.5 * resNM.switches
     };
   }
 
@@ -445,12 +478,14 @@
       try {
         chrome.storage.local.get(['sunnyMapData'], function (result) {
           var md = result.sunnyMapData;
-          if (!md || !md.fileContent) { sendResponse({ error: 'no data' }); return; }
+          if (!md || !md.parsed) { sendResponse({ error: 'no data' }); return; }
 
-          var od = parseFloat(request.od) || md.od || 8;
-          var base = recalcOd(md.fileContent, od);
-          var ho = md.hoFileContent ? recalcOd(md.hoFileContent, od) : base;
-          var inv = md.inFileContent ? recalcOd(md.inFileContent, od) : base;
+          var od = parseFloat(request.od); if (isNaN(od)) od = md.od >= 0 ? md.od : 8;
+          var dtRatio = md.sr > 0 ? (md.sr_DT || 0) / md.sr : 1.5;
+          var htRatio = md.sr > 0 ? (md.sr_HT || 0) / md.sr : 0.75;
+          var base = recalcOd(md.parsed, od);
+          var ho = md.hoParsed ? recalcOd(md.hoParsed, od) : base;
+          var inv = md.inParsed ? recalcOd(md.inParsed, od) : base;
 
           var updates = {
             sr: base.sr, sr_DT: base.srDT, sr_HT: base.srHT,
@@ -463,6 +498,8 @@
           };
 
           chrome.storage.local.set({ sunnyMapData: Object.assign({}, md, updates) }, function () {
+            var pp = computeSunnyPP(base.sr, 100, [], md.totalNotes, base.variety, base.accScalar);
+            showBadge(base.sr, pp.pp, md.diffLabel, md.columnCount);
             sendResponse({ ok: true });
           });
         });

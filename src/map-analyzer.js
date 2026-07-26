@@ -38,7 +38,7 @@ var RC4K_REFORM = [
 
 var LN4K = [
     [4.832, 4.898, "LN 5 mid"],[4.898, 4.963, "LN 5 mid/high"],[4.963, 5.095, "LN 5 high"],
-    [5.095, 5.160, "LN 6 low"],[5.143, 5.160, "LN 6 mid/low"],[5.160, 5.213, "LN 6 mid"],
+    [5.095, 5.143, "LN 6 low"],[5.143, 5.160, "LN 6 mid/low"],[5.160, 5.213, "LN 6 mid"],
     [5.213, 5.264, "LN 6 mid/high"],[5.264, 5.314, "LN 6 high"],[5.314, 5.446, "LN 7 low"],
     [5.446, 5.521, "LN 7 mid/low"],[5.521, 5.577, "LN 7 mid"],[5.577, 5.631, "LN 7 mid/high"],
     [5.631, 5.686, "LN 7 high"],[5.686, 5.740, "LN 8 low"],[5.740, 5.794, "LN 8 mid/low"],
@@ -72,6 +72,7 @@ function intervalLookup(sr, table, fallback) {
 }
 
 function tierAbbr(name) {
+  // WARNING: replace order is critical — /mid\/high/ must come before /high/ and /mid/
   if (!name) return "??";
   var s = name;
   s = s.replace(/Emik /g, "").replace(/Thaumiel /g, "").replace(/CloverWisp /g, "");
@@ -170,9 +171,9 @@ var LN6K = [
     [5.246,5.294,"LN 2 mid"],[5.294,5.322,"LN 2 mid/high"],[5.322,5.350,"LN 2 high"],
     [5.350,5.378,"LN 3 low"],[5.378,5.406,"LN 3 mid/low"],[5.406,5.513,"LN 3 mid"],
     [5.513,5.699,"LN 3 mid/high"],[5.699,5.885,"LN 3 high"],[5.885,6.071,"LN 4 low"],
-    [6.071,6.257,"LN 4 mid/low"],[6.257,6.347,"LN 4 mid"],[6.347,6.341,"LN 4 mid/high"],
-    [6.341,6.335,"LN 4 high"],[6.335,6.329,"LN 5 low"],[6.329,6.323,"LN 5 mid/low"],
-    [6.323,6.371,"LN 5 mid"],[6.371,6.473,"LN 5 mid/high"],[6.473,6.575,"LN 5 high"],
+    [6.071,6.257,"LN 4 mid/low"],[6.257,6.335,"LN 4 mid"],[6.335,6.341,"LN 4 mid/high"],
+    [6.341,6.347,"LN 4 high"],[6.347,6.353,"LN 5 low"],[6.353,6.359,"LN 5 mid/low"],
+    [6.359,6.371,"LN 5 mid"],[6.371,6.473,"LN 5 mid/high"],[6.473,6.575,"LN 5 high"],
     [6.575,6.677,"LN 6 low"],[6.677,6.779,"LN 6 mid/low"],[6.779,6.840,"LN 6 mid"],
     [6.840,6.860,"LN 6 mid/high"],[6.860,6.880,"LN 6 high"],[6.880,6.900,"LN 7 low"],
     [6.900,6.920,"LN 7 mid/low"],[6.920,6.973,"LN 7 mid"],[6.973,7.059,"LN 7 mid/high"],
@@ -215,7 +216,7 @@ var LN7K = [
 
 function analyzeMap(parser) {
   var columnCount = parser.columnCount;
-  var od = parser.od > 0 ? parser.od : 8;
+  var od = parser.od >= 0 ? parser.od : 8;
   var totalNotes = parser.columns.length;
   var totalTime = 0;
   if (totalNotes > 0) {
