@@ -2,6 +2,8 @@
 
 基于 [Sunny Rework](https://github.com/sunnyxxy/Star-Rating-Rebirth) 算法的 osu!mania 谱面难度与 PP 估算 Chrome 扩展（edge等支持扩展的浏览器均可使用）。在 osu! 官网谱面页直接查看 Sunny Rework 星数、RC 段位、以及实时 PP 计算。
 
+> [English Version](./README_EN.md)
+
 ## 功能
 
 - **Sunny Rework 星数** — 4K/6K/7K 的 Sunny Rework 难度星数估算
