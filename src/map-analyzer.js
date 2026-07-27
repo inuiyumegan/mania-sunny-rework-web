@@ -85,13 +85,17 @@ function tierAbbr(name) {
   s = s.replace(/Azimuth/g, "ψ").replace(/Zenith/g, "ζ").replace(/Stellium/g, "★");
   s = s.replace(/Terra/g, "10").replace(/Celestial/g, "11").replace(/Mystery/g, "12");
   s = s.replace(/Nihility/g, "13").replace(/Finish/g, "14");
-  s = s.replace(/(\S.+)\s+mid\/high/g, function(m, base) {
+  s = s.replace(/(.+)\s+(mid\/high)/g, function(m, base) {
     var parts = base.split(/\s+/);
-    return base + "/" + parts[parts.length - 1] + "⁺";
+    var last = parts[parts.length - 1];
+    var num = last.match(/(\d+)$/);
+    return base + "/" + (num ? num[1] : last) + "⁺";
   });
-  s = s.replace(/(\S.+)\s+mid\/low/g, function(m, base) {
+  s = s.replace(/(.+)\s+(mid\/low)/g, function(m, base) {
     var parts = base.split(/\s+/);
-    return base + "/" + parts[parts.length - 1] + "⁻";
+    var last = parts[parts.length - 1];
+    var num = last.match(/(\d+)$/);
+    return base + "/" + (num ? num[1] : last) + "⁻";
   });
   s = s.replace(/\s+low/g, "⁻");
   s = s.replace(/\s+high/g, "⁺");
