@@ -4,7 +4,6 @@
 
   var CONTAINER_ID = 'sunny-sr-badge';
   var lastBeatmapId = null;
-  var calculating = false;
   var _extInvalidated = false;
 
   function getBeatmapId() {
@@ -16,47 +15,6 @@
     var hashMatch = window.location.hash.match(/#(?:mania|osu|taiko|fruits)\/(\d+)/);
     if (hashMatch) return hashMatch[1];
     return null;
-  }
-
-  function srColor(sr) {
-    if (sr >= 8) return '#ff6b6b';
-    if (sr >= 6) return '#ffd93d';
-    if (sr >= 4) return '#6bcb77';
-    return '#4d96ff';
-  }
-
-  function computeSunnyPP(sr, accuracy, mods, totalNotes, variety, accScalar) {
-    // Real Sunny Rework PP formula from ManiaPerformanceCalculator.cs
-    var acc = Math.min(1, Math.max(0, (accuracy || 100) / 100));
-    var modsStr = mods ? mods.join('') : '';
-
-    // Mod multiplier
-    var mult = 1.0;
-    if (modsStr.indexOf('NF') >= 0) mult *= 0.75;
-    if (modsStr.indexOf('EZ') >= 0) mult *= 0.90;
-
-    // Difficulty value
-    var proportion = 0;
-    if (acc > 0.80) {
-      proportion = 4.5 * (acc - 0.8) / Math.pow(100 * (1 - acc) + Math.pow(0.9, 20), 0.05);
-    }
-    var difficultyValue = 9.8 * Math.pow(Math.max(sr - 0.15, 0.05), 2.2) * proportion;
-
-    // Variety multiplier
-    var v = variety || 0;
-    var varietyMult = 0.945 + 0.11 / (1 + Math.exp(-3 * (v - 3.25)));
-
-    // Accuracy multiplier
-    var ac = accScalar || 1;
-    var sigmoidScaler = 0.87 + 0.26 / (1.0 + Math.exp(-20 * (ac - 1)));
-    var accMult = sigmoidScaler * (2 * Math.pow(acc, 20) - 1) + 2 - 2 * Math.pow(acc, 20);
-
-    // Length multiplier
-    var tn = totalNotes || 1;
-    var lengthMult = 1.1 / (1.0 + Math.sqrt(sr / (2 * tn)));
-
-    var pp = difficultyValue * mult * varietyMult * accMult * lengthMult;
-    return { pp: pp, diffPP: difficultyValue, strain: sr };
   }
 
   function applyHO(content) {
@@ -142,11 +100,17 @@
     return badge;
   }
 
+  function escapeHtml(str) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+  }
+
   function showBadge(sr, pp, tierLabel, keys) {
     var badge = createBadge();
     var color = srColor(sr);
     var isSup = keys === 4 || keys === 6 || keys === 7;
-    var tierHtml = (tierLabel && isSup) ? '<span class="sunny-sr-tier" style="color:' + color + ';">' + tierLabel + '</span>' : '';
+    var tierHtml = (tierLabel && isSup) ? '<span class="sunny-sr-tier" style="color:' + color + ';">' + escapeHtml(tierLabel) + '</span>' : '';
     var keysHtml = isSup ? '<span class="sunny-sr-keys" style="color:' + color + ';">' + keys + 'K</span>' : '';
     var ppRounded = pp > 10 ? Math.round(pp) : pp.toFixed(1);
     badge.innerHTML =
@@ -159,6 +123,15 @@
         '<span class="sunny-sr-label">Rework PP</span>' +
         '<span class="sunny-sr-value" style="color:' + color + ';">' + ppRounded + 'pp</span>' +
       '</div>' + keysHtml;
+    badge.style.display = 'flex';
+  }
+
+  function showLoading() {
+    var badge = createBadge();
+    badge.innerHTML =
+      '<div class="sunny-sr-row">' +
+        '<span class="sunny-sr-value" style="color:#7a7a8c;">...</span>' +
+      '</div>';
     badge.style.display = 'flex';
   }
 
@@ -243,10 +216,8 @@
   }
 
   async function calculateAndStore(beatmapId) {
-    if (calculating) return;
     if (beatmapId === lastBeatmapId) return;
     if (_extInvalidated) return;
-    calculating = true;
     lastBeatmapId = beatmapId;
 
     try {
@@ -258,7 +229,6 @@
 
       if (parser.mode !== 3) {
         hideBadge();
-        calculating = false;
         return;
       }
 
@@ -339,7 +309,7 @@
         headerSub += ' ' + diffName;
       }
 
-      hideBadge();
+      showLoading();
       chrome.storage.local.set({
         sunnyMapData: {
           beatmapId: beatmapId,
@@ -393,7 +363,6 @@
       lastBeatmapId = null;
     }
 
-    calculating = false;
   }
 
   function checkAndRun() {

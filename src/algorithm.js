@@ -719,16 +719,24 @@ function computeSwitches(noteSeq, tailSeq, allCorners, ksArr, weights) {
     headGaps.push(heads[i + 1] - heads[i]);
   }
 
-  // TODO O(n×k) sliding window — replace with running prefix sum
+  // sliding window average via prefix sum — O(n) instead of O(n×k)
   const numHeadGaps = headGaps.length;
-  const avgs = [];
-  for (let i = 0; i < numHeadGaps; i++) {
-    const start = Math.max(0, i - 50);
-    const end = Math.min(i + 50, numHeadGaps - 1);
-    let sum = 0;
-    for (let j = start; j <= end; j++) sum += headGaps[j];
-    avgs.push(sum / (end - start + 1));
+  function slidingWindowAvg(arr, window) {
+    const n = arr.length;
+    const pref = new Array(n);
+    pref[0] = arr[0];
+    for (let i = 1; i < n; i++) pref[i] = pref[i - 1] + arr[i];
+    const avgs = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const start = Math.max(0, i - window);
+      const end = Math.min(i + window, n - 1);
+      const sum = pref[end] - (start > 0 ? pref[start - 1] : 0);
+      avgs[i] = sum / (end - start + 1);
+    }
+    return avgs;
   }
+
+  const avgs = slidingWindowAvg(headGaps, 50);
 
   let signatureHead = 0;
   for (let i = 0; i < numHeadGaps; i++) {
@@ -757,14 +765,7 @@ function computeSwitches(noteSeq, tailSeq, allCorners, ksArr, weights) {
   let signatureTail = 0, refSignatureTail = 0;
   if (tails.length > 0 && tails[tails.length - 1] > tails[0] && tailGaps.length > 0) {
     const numTailGaps = tailGaps.length;
-    const avgsTail = [];
-    for (let i = 0; i < numTailGaps; i++) {
-      const start = Math.max(0, i - 50);
-      const end = Math.min(i + 50, numTailGaps - 1);
-      let sum = 0;
-      for (let j = start; j <= end; j++) sum += tailGaps[j];
-      avgsTail.push(sum / (end - start + 1));
-    }
+    const avgsTail = slidingWindowAvg(tailGaps, 50);
     for (let i = 0; i < numTailGaps; i++) {
       if (avgsTail[i] > 0) {
         signatureTail += Math.sqrt((tailGaps[i] / avgsTail[i] / numTailGaps) * weightsAtTail[i])

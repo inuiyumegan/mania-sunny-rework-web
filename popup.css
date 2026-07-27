@@ -2,6 +2,17 @@
   font-family: 'Torus';
   src: url('Torus-Regular.otf') format('opentype');
   font-weight: 400;
+  font-display: swap;
+  ascent-override: 93%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Noto Sans CJK SC';
+  src: url('NotoSansCJKsc-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
 }
 
 :root {

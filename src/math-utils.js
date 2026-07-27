@@ -104,3 +104,53 @@ function smoothOnCorners(x, f, window, scale, mode) {
   }
   return g;
 }
+
+// ---- shared display utilities ----
+
+function srColor(sr) {
+  if (sr >= 8) return '#ff6b6b';
+  if (sr >= 6) return '#ffd93d';
+  if (sr >= 4) return '#6bcb77';
+  return '#4d96ff';
+}
+
+function ppColor(pp) {
+  if (pp >= 800) return '#ff6b6b';
+  if (pp >= 400) return '#ffd93d';
+  if (pp >= 100) return '#6bcb77';
+  return '#4d96ff';
+}
+
+function formatPP(val) {
+  return val < 10 ? val.toFixed(1) : Math.round(val).toString();
+}
+
+// ---- shared PP formula ----
+
+function computeSunnyPP(sr, accuracy, mods, totalNotes, variety, accScalar) {
+  var acc = Math.min(1, Math.max(0, (accuracy || 100) / 100));
+  var modsStr = mods ? mods.join('') : '';
+
+  var mult = 1.0;
+  if (modsStr.indexOf('NF') >= 0) mult *= 0.75;
+  if (modsStr.indexOf('EZ') >= 0) mult *= 0.90;
+
+  var proportion = 0;
+  if (acc > 0.80) {
+    proportion = 4.5 * (acc - 0.8) / Math.pow(100 * (1 - acc) + Math.pow(0.9, 20), 0.05);
+  }
+  var difficultyValue = 9.8 * Math.pow(Math.max(sr - 0.15, 0.05), 2.2) * proportion;
+
+  var v = variety || 0;
+  var varietyMult = 0.945 + 0.11 / (1 + Math.exp(-3 * (v - 3.25)));
+
+  var ac = accScalar || 1;
+  var sigmoidScaler = 0.87 + 0.26 / (1.0 + Math.exp(-20 * (ac - 1)));
+  var accMult = sigmoidScaler * (2 * Math.pow(acc, 20) - 1) + 2 - 2 * Math.pow(acc, 20);
+
+  var tn = totalNotes || 1;
+  var lengthMult = 1.1 / (1.0 + Math.sqrt(sr / (2 * tn)));
+
+  var pp = difficultyValue * mult * varietyMult * accMult * lengthMult;
+  return { pp: pp, diffPP: difficultyValue, strain: sr };
+}

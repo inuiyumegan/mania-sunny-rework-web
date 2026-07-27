@@ -29,11 +29,11 @@ var RC4K_REFORM = [
     [8.000, 8.098, "Delta mid/low"],[8.098, 8.244, "Delta mid"],[8.244, 8.438, "Delta mid/high"],
     [8.438, 8.631, "Delta high"],[8.631, 8.825, "Epsilon low"],[8.825, 9.019, "Epsilon mid/low"],
     [9.019, 9.172, "Epsilon mid"],[9.172, 9.285, "Epsilon mid/high"],[9.285, 9.398, "Epsilon high"],
-    [9.398, 9.511, "Emik Zeta low"],[9.511, 9.624, "Emik Zeta mid/low"],[9.624, 9.742, "Emik Zeta mid"],
-    [9.742, 9.867, "Emik Zeta mid/high"],[9.867, 9.991, "Emik Zeta high"],[9.991, 10.116, "Thaumiel Eta low"],
-    [10.116, 10.241, "Thaumiel Eta mid/low"],[10.241, 10.358, "Thaumiel Eta mid"],[10.358, 10.468, "Thaumiel Eta mid/high"],
-    [10.468, 10.578, "Thaumiel Eta high"],[10.578, 10.689, "CloverWisp Theta low"],[10.689, 10.799, "CloverWisp Theta mid/low"],
-    [10.799, 10.909, "CloverWisp Theta mid"],[10.909, 11.019, "CloverWisp Theta mid/high"],[11.019, 11.129, "CloverWisp Theta high"]
+    [9.398, 9.511, "Zeta low"],[9.511, 9.624, "Zeta mid/low"],[9.624, 9.742, "Zeta mid"],
+    [9.742, 9.867, "Zeta mid/high"],[9.867, 9.991, "Zeta high"],[9.991, 10.116, "Eta low"],
+    [10.116, 10.241, "Eta mid/low"],[10.241, 10.358, "Eta mid"],[10.358, 10.468, "Eta mid/high"],
+    [10.468, 10.578, "Eta high"],[10.578, 10.689, "Theta low"],[10.689, 10.799, "Theta mid/low"],
+    [10.799, 10.909, "Theta mid"],[10.909, 11.019, "Theta mid/high"],[11.019, 11.129, "Theta high"]
 ];
 
 var LN4K = [
@@ -54,42 +54,51 @@ var LN4K = [
     [7.665, 7.753, "LN 13 high"],[7.753, 7.841, "LN 14 low"],[7.841, 7.929, "LN 14 mid/low"],
     [7.929, 8.013, "LN 14 mid"],[8.013, 8.093, "LN 14 mid/high"],[8.093, 8.173, "LN 14 high"],
     [8.173, 8.253, "LN 15 low"],[8.253, 8.333, "LN 15 mid/low"],[8.333, 8.389, "LN 15 mid"],
-    [8.389, 8.428, "LN 15 mid/high"],[8.428, 8.470, "LN 15 high"],[8.470, 8.509, "Hypersovae LN 16 low"],
-    [8.509, 8.548, "Hypersovae LN 16 mid/low"],[8.548, 8.586, "Hypersovae LN 16 mid"],
-    [8.586, 8.635, "Hypersovae LN 16 mid/high"],[8.635, 8.908, "Hypersovae LN 16 high"],
-    [8.908, 9.044, "Lnlism LN 17 low"],[9.044, 9.180, "Lnlism LN 17 mid/low"],
-    [9.180, 9.316, "Lnlism LN 17 mid"],[9.316, 9.452, "Lnlism LN 17 mid/high"],
-    [9.452, 9.589, "Lnlism LN 17 high"]
+    [8.389, 8.428, "LN 15 mid/high"],[8.428, 8.470, "LN 15 high"],[8.470, 8.509, "LN 16 low"],
+    [8.509, 8.548, "LN 16 mid/low"],[8.548, 8.586, "LN 16 mid"],
+    [8.586, 8.635, "LN 16 mid/high"],[8.635, 8.908, "LN 16 high"],
+    [8.908, 9.044, "LN 17 low"],[9.044, 9.180, "LN 17 mid/low"],
+    [9.180, 9.316, "LN 17 mid"],[9.316, 9.452, "LN 17 mid/high"],
+    [9.452, 9.589, "LN 17 high"]
 ];
 
 function intervalLookup(sr, table, fallback) {
   for (var i = 0; i < table.length; i++) {
     if (sr >= table[i][0] && sr <= table[i][1]) return table[i][2];
   }
-  if (sr < table[0][0]) return "< " + table[0][2];
-  if (sr > table[table.length - 1][1]) return "> " + table[table.length - 1][2];
+  if (sr < table[0][0]) return "<" + table[0][2];
+  if (sr > table[table.length - 1][1]) return ">" + table[table.length - 1][2];
   return fallback || "Unknown";
 }
 
 function tierAbbr(name) {
-  // WARNING: replace order is critical — /mid\/high/ must come before /high/ and /mid/
   if (!name) return "??";
+  var prefix = '';
+  if (name.length > 1 && (name[0] === '<' || name[0] === '>') && name[1] === ' ') {
+    prefix = name[0];
+    name = name.slice(2);
+  }
   var s = name;
-  s = s.replace(/Emik /g, "").replace(/Thaumiel /g, "").replace(/CloverWisp /g, "");
-  s = s.replace(/Hypersovae /g, "").replace(/Lnlism /g, "");
   s = s.replace(/Regular /g, "reg").replace(/Reform /g, "rf").replace(/Intro /g, "intro ");
-  s = s.replace(/LN /g, "LN");
   s = s.replace(/Alpha/g, "α").replace(/Beta/g, "β").replace(/Gamma/g, "γ").replace(/Delta/g, "δ");
   s = s.replace(/Epsilon/g, "ε").replace(/Zeta/g, "ζ").replace(/Eta/g, "η").replace(/Theta/g, "θ");
   s = s.replace(/Azimuth/g, "ψ").replace(/Zenith/g, "ζ").replace(/Stellium/g, "★");
-  s = s.replace(/Terra/g, "Te").replace(/Celestial/g, "Ce").replace(/Mystery/g, "My");
-  s = s.replace(/Nihility/g, "Ni").replace(/Finish/g, "Fi");
-  s = s.replace(/ mid\/high/g, "⁺⁺").replace(/ mid\/low/g, "₋₋");
-  s = s.replace(/ low/g, "⁻").replace(/ high/g, "⁺⁺");
-  s = s.replace(/ mid/g, "");
-  s = s.replace(/\|\|/g, "|");
+  s = s.replace(/Terra/g, "10").replace(/Celestial/g, "11").replace(/Mystery/g, "12");
+  s = s.replace(/Nihility/g, "13").replace(/Finish/g, "14");
+  s = s.replace(/(\S.+)\s+mid\/high/g, function(m, base) {
+    var parts = base.split(/\s+/);
+    return base + "/" + parts[parts.length - 1] + "⁺";
+  });
+  s = s.replace(/(\S.+)\s+mid\/low/g, function(m, base) {
+    var parts = base.split(/\s+/);
+    return base + "/" + parts[parts.length - 1] + "⁻";
+  });
+  s = s.replace(/\s+low/g, "⁻");
+  s = s.replace(/\s+high/g, "⁺");
+  s = s.replace(/\s+mid/g, "");
+  s = s.replace(/ \|\| /g, " | ");
   s = s.replace(/\s+/g, " ").trim();
-  return s;
+  return prefix + s;
 }
 
 function getRCTier(sr, keys) {
