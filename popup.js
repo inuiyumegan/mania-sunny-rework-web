@@ -171,25 +171,26 @@
       var keySup = mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7 || mapData.columnCount === 10;
       var rcSR, lnSR, tier = '';
       if (keySup) {
-        var useDaniel = (mapData.columnCount === 4 && mapData.danielSR >= 6.36 && mapData.danielSR > 0);
+        var danielR = mapData.columnCount === 4 ? estimateSR(mapData.danielSR, mapData.danielSR_DT, mapData.danielSR_HT, r) : 0;
+        var useDanielForRC = (mapData.columnCount === 4 && danielR >= 6.365);
         var tierNM, tierDT, tierHT;
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
-          // LN map: RC uses Daniel (if 4K+active) else srHO; LN uses Sunny
-          if (useDaniel) {
-            tierNM = getAlgoSR(''); tierDT = getAlgoSR('_DT'); tierHT = getAlgoSR('_HT');
+          // LN map: RC uses Daniel (if rate-adjusted >= 6.365) else srHO; LN uses Sunny
+          if (useDanielForRC) {
+            tierNM = mapData.danielSR; tierDT = mapData.danielSR_DT; tierHT = mapData.danielSR_HT;
           } else {
-            tierNM = mapData.srHO != null ? mapData.srHO : getAlgoSR('');
-            tierDT = mapData.srHO_DT != null ? mapData.srHO_DT : getAlgoSR('_DT');
-            tierHT = mapData.srHO_HT != null ? mapData.srHO_HT : getAlgoSR('_HT');
+            tierNM = mapData.srHO != null ? mapData.srHO : mapData.sr;
+            tierDT = mapData.srHO_DT != null ? mapData.srHO_DT : mapData.sr_DT;
+            tierHT = mapData.srHO_HT != null ? mapData.srHO_HT : mapData.sr_HT;
           }
         } else {
-          // RC map: RC uses Daniel (if 4K+active) else Sunny; no LN
-          tierNM = getAlgoSR('');
-          tierDT = getAlgoSR('_DT');
-          tierHT = getAlgoSR('_HT');
+          // RC map: RC uses Daniel (if rate-adjusted >= 6.365) else Sunny; no LN
+          tierNM = useDanielForRC ? mapData.danielSR : mapData.sr;
+          tierDT = useDanielForRC ? mapData.danielSR_DT : mapData.sr_DT;
+          tierHT = useDanielForRC ? mapData.danielSR_HT : mapData.sr_HT;
         }
         rcSR = estimateSR(tierNM, tierDT, tierHT, r);
-        tier = useDaniel ? tierAbbr(getDanielTier(rcSR).label) : rcLookup(rcSR, mapData.columnCount, mapData.columnCount === 7 ? active7KMode : undefined);
+        tier = useDanielForRC ? tierAbbr(getDanielTier(rcSR).label) : rcLookup(rcSR, mapData.columnCount, mapData.columnCount === 7 ? active7KMode : undefined);
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
           // LN tier always uses Sunny SR, bypass algorithm selection
           var lnNM = mapData.sr, lnDT = mapData.sr_DT, lnHT = mapData.sr_HT;

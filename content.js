@@ -286,14 +286,13 @@
       var tier = { label: '' };
       if (isSupKeys) {
         var hasLN = stats.lnRatio >= 0.15;
-        var DANIEL_THRESHOLD = 6.36;
-        var useDaniel = (stats.columnCount === 4 && danielSR >= DANIEL_THRESHOLD);
+        var useDaniel = (stats.columnCount === 4 && danielSR >= 6.365);
         var rcSR;
         if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) {
-          // LN map: RC uses Daniel (if 4K+active) else srHO; LN uses Sunny
+          // LN map: RC uses Daniel (if >= 6.365) else srHO; LN uses Sunny
           rcSR = useDaniel ? danielSR : (srHO != null ? srHO : sr);
         } else {
-          // RC map: RC uses Daniel (if 4K+active) else Sunny; no LN
+          // RC map: RC uses Daniel (if >= 6.365) else Sunny; no LN
           rcSR = useDaniel ? danielSR : sr;
         }
         var rcTier = useDaniel ? getDanielTier(rcSR).label : getRCTier(rcSR, stats.columnCount);
