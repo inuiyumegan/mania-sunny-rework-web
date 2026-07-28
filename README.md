@@ -6,8 +6,9 @@
 
 ## 功能
 
-- **Sunny Rework 星数** — 4K/6K/7K 的 Sunny Rework 难度星数估算
+- **Sunny Rework 星数** — 4K/6K/7K/10K 的 Sunny Rework 难度星数估算
 - **Daniel 算法** — 4K RC 的 Daniel 段位估算 (Alpha ~ Theta)
+- **7K Wild 模式** — 7K 支持 Auto / Wild 两种段位算法切换
 - **RC / LN 段位** — 根据 LN 占比自动显示 RC 段位或 RC+LN 混合段位
 - **PP 估算** — NM/DT/HT 三列实时 PP 计算，支持自定义倍速 (0.5x ~ 2.0x)
 - **MOD 支持** — SV1/SV2/NF/EZ/HO/IN 等 mod 组合
@@ -34,7 +35,7 @@
 | **DT / NM / HT** | 三列分别显示 1.5x / 1.0x / 0.75x 的星数和 PP |
 | **倍速滑块** | 支持 0.5x ~ 2.0x 自定义倍速，预设快捷键快速切换 |
 | **判定输入** | 输入 320/300/200/100/50/miss 数量计算实时 PP |
-| **算法切换** | Auto / Daniel / Sunny 三种难度估算模式 |
+| **算法切换** | 4K: Auto / Daniel / Sunny；7K: Auto / Wild |
 | **MOD 按钮** | 切换 SV1/SV2/NF/EZ/HO/IN，自动重算 |
 | **自定义 OD** | 修改 OD 值后自动请求后端重算星数 |
 

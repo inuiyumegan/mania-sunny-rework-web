@@ -171,20 +171,28 @@
       var keySup = mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7 || mapData.columnCount === 10;
       var rcSR, lnSR, tier = '';
       if (keySup) {
+        var useDaniel = (mapData.columnCount === 4 && mapData.danielSR >= 6.36 && mapData.danielSR > 0);
         var tierNM, tierDT, tierHT;
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
-          tierNM = mapData.srHO != null ? mapData.srHO : getAlgoSR('');
-          tierDT = mapData.srHO_DT != null ? mapData.srHO_DT : getAlgoSR('_DT');
-          tierHT = mapData.srHO_HT != null ? mapData.srHO_HT : getAlgoSR('_HT');
+          // LN map: RC uses Daniel (if 4K+active) else srHO; LN uses Sunny
+          if (useDaniel) {
+            tierNM = getAlgoSR(''); tierDT = getAlgoSR('_DT'); tierHT = getAlgoSR('_HT');
+          } else {
+            tierNM = mapData.srHO != null ? mapData.srHO : getAlgoSR('');
+            tierDT = mapData.srHO_DT != null ? mapData.srHO_DT : getAlgoSR('_DT');
+            tierHT = mapData.srHO_HT != null ? mapData.srHO_HT : getAlgoSR('_HT');
+          }
         } else {
+          // RC map: RC uses Daniel (if 4K+active) else Sunny; no LN
           tierNM = getAlgoSR('');
           tierDT = getAlgoSR('_DT');
           tierHT = getAlgoSR('_HT');
         }
         rcSR = estimateSR(tierNM, tierDT, tierHT, r);
-        tier = rcLookup(rcSR, mapData.columnCount, mapData.columnCount === 7 ? active7KMode : undefined);
+        tier = useDaniel ? tierAbbr(getDanielTier(rcSR).label) : rcLookup(rcSR, mapData.columnCount, mapData.columnCount === 7 ? active7KMode : undefined);
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
-          var lnNM = getAlgoSR(''), lnDT = getAlgoSR('_DT'), lnHT = getAlgoSR('_HT');
+          // LN tier always uses Sunny SR, bypass algorithm selection
+          var lnNM = mapData.sr, lnDT = mapData.sr_DT, lnHT = mapData.sr_HT;
           lnSR = estimateSR(lnNM, lnDT, lnHT, r);
           var lnTier = lnLookup(lnSR, mapData.columnCount);
           if (lnTier) tier += ' | ' + lnTier;

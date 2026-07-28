@@ -64,14 +64,13 @@ return function computeDanielSR(columns, noteStarts, noteEnds, noteTypes, column
 
   var ac=baseC.map(function(_,i){var a=[];for(var k3=0;k3<K;k3++)if(ku[k3][i])a.push(k3);return a;});
 
-  // keyUsage400 — aligned with algorithm.js getKeyUsage400
+  // keyUsage400 — matches Daniel Python: symmetric decay around note head
   var ku4 = {0:new Float64Array(baseC.length),1:new Float64Array(baseC.length),2:new Float64Array(baseC.length),3:new Float64Array(baseC.length)};
-  for (var i5=0;i5<noteSeq.length;i5++){var k4=noteSeq[i5][0],h4=noteSeq[i5][1],t4=0;
-   var li4=bsl(baseC,h4-400),li=bsl(baseC,h4),ri=bsl(baseC,t4<0?h4:t4),ri4=bsl(baseC,(t4<0?h4:t4)+400);
-   if(li>=ri){ri=bsl(baseC,h4+1);}
-   for(var idx2=li;idx2<ri;idx2++)ku4[k4][idx2]+=3.75;
-   for(var idx3=li4;idx3<li;idx3++)ku4[k4][idx3]+=3.75-(3.75/160000)*Math.pow(baseC[idx3]-h4,2);
-   for(var idx4=ri;idx4<ri4;idx4++)ku4[k4][idx4]+=3.75-(3.75/160000)*Math.pow(baseC[idx4]-(t4<0?h4:t4),2);}
+  for (var i5=0;i5<noteSeq.length;i5++){var k4=noteSeq[i5][0],h4=Math.max(noteSeq[i5][1],0);
+   var li=bsl(baseC,h4-400),mid=bsl(baseC,h4),ri=bsl(baseC,h4+400);
+   ku4[k4][mid]+=3.75;
+   for(var idx2=li;idx2<mid;idx2++)ku4[k4][idx2]+=3.75-(3.75/160000)*Math.pow(baseC[idx2]-h4,2);
+   for(var idx3=mid+1;idx3<ri;idx3++)ku4[k4][idx3]+=3.75-(3.75/160000)*Math.pow(baseC[idx3]-h4,2);}
 
   // anchor
   var anchor = new Float64Array(baseC.length);

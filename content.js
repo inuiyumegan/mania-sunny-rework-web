@@ -286,17 +286,21 @@
       var tier = { label: '' };
       if (isSupKeys) {
         var hasLN = stats.lnRatio >= 0.15;
-        // RC tier: for LN maps use HO SR (match popup behavior)
         var DANIEL_THRESHOLD = 6.36;
-        var rcSR = sr;
-        if (stats.columnCount === 4) {
-          rcSR = (danielSR >= DANIEL_THRESHOLD) ? danielSR : sr;
+        var useDaniel = (stats.columnCount === 4 && danielSR >= DANIEL_THRESHOLD);
+        var rcSR;
+        if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) {
+          // LN map: RC uses Daniel (if 4K+active) else srHO; LN uses Sunny
+          rcSR = useDaniel ? danielSR : (srHO != null ? srHO : sr);
+        } else {
+          // RC map: RC uses Daniel (if 4K+active) else Sunny; no LN
+          rcSR = useDaniel ? danielSR : sr;
         }
-        if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) rcSR = srHO != null ? srHO : sr;
-        var rcTier = getRCTier(rcSR, stats.columnCount);
+        var rcTier = useDaniel ? getDanielTier(rcSR).label : getRCTier(rcSR, stats.columnCount);
         if (rcTier) {
           tier.label = rcTier;
-          if (hasLN) {
+          if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) {
+            // LN tier always uses Sunny SR
             var lnTier = getLNTier(sr, stats.columnCount);
             if (lnTier) tier.label = rcTier + ' || ' + lnTier;
           }

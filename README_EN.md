@@ -6,8 +6,9 @@ A Chrome extension (compatible with Edge and other Chromium browsers) for osu!ma
 
 ## Features
 
-- **Sunny Rework Stars** — Star rating estimation for 4K/6K/7K using the Sunny Rework algorithm
+- **Sunny Rework Stars** — Star rating estimation for 4K/6K/7K/10K using the Sunny Rework algorithm
 - **Daniel Algorithm** — 4K RC tier estimation (Alpha ~ Theta) via Daniel
+- **7K Wild Mode** — 7K supports Auto / Wild algorithm toggle
 - **RC / LN Tiers** — Auto-displays RC tier or RC+LN mixed tier based on LN ratio
 - **PP Estimation** — Real-time PP for NM/DT/HT columns, supports custom speed (0.5x ~ 2.0x)
 - **MOD Support** — Mod combinations: SV1/SV2/NF/EZ/HO/IN and more
@@ -36,7 +37,7 @@ A Chrome extension (compatible with Edge and other Chromium browsers) for osu!ma
 | **DT / NM / HT** | Three columns showing 1.5x / 1.0x / 0.75x star ratings and PP |
 | **Speed Slider** | Custom speed from 0.5x ~ 2.0x with preset shortcut buttons |
 | **Judgment Input** | Enter 320/300/200/100/50/miss counts for real-time PP |
-| **Algorithm Switch** | Auto / Daniel / Sunny difficulty estimation modes |
+| **Algorithm Switch** | 4K: Auto / Daniel / Sunny; 7K: Auto / Wild |
 | **MOD Buttons** | Toggle SV1/SV2/NF/EZ/HO/IN, auto-recalculates |
 | **Custom OD** | Modify OD value, triggers automatic recalculation |
 

@@ -58,8 +58,15 @@ var LN4K = [
     [8.509, 8.548, "LN 16 mid/low"],[8.548, 8.586, "LN 16 mid"],
     [8.586, 8.635, "LN 16 mid/high"],[8.635, 8.908, "LN 16 high"],
     [8.908, 9.044, "LN 17 low"],[9.044, 9.180, "LN 17 mid/low"],
-    [9.180, 9.316, "LN 17 mid"],[9.316, 9.452, "LN 17 mid/high"],
-    [9.452, 9.589, "LN 17 high"]
+    [9.180, 9.2059, "LN 17 mid"],[9.2059, 9.2546, "LN 17 mid/high"],
+    [9.2546, 9.3034, "LN 17 high"],[9.3034, 9.3522, "LN 18 low"],
+    [9.3522, 9.401, "LN 18 mid/low"],[9.401, 9.486, "LN 18 mid"],
+    [9.486, 9.6074, "LN 18 mid/high"],[9.6074, 9.7287, "LN 18 high"],
+    [9.7287, 9.85, "LN 19 low"],[9.85, 9.9713, "LN 19 mid/low"],
+    [9.9713, 10.0612, "LN 19 mid"],[10.0612, 10.1196, "LN 19 mid/high"],
+    [10.1196, 10.178, "LN 19 high"],[10.178, 10.2364, "LN 20 low"],
+    [10.2364, 10.2949, "LN 20 mid/low"],[10.2949, 10.3533, "LN 20 mid"],
+    [10.3533, 10.4117, "LN 20 mid/high"],[10.4117, 10.4702, "LN 20 high"]
 ];
 
 function intervalLookup(sr, table, fallback) {
@@ -119,6 +126,53 @@ function getLNTier(sr, keys) {
   if (keys === 7) return intervalLookup(sr, LN7K, "Unknown LN");
   if (keys === 4) return intervalLookup(sr, LN4K, "Unknown LN");
   return null; // Only 4/6/7K supported
+}
+
+// Daniel tier system — mirrors daniel.py get_dan_from_diff / _precompute_dan_boundaries
+var DAN_MEANS = {
+  "Alpha":   6.562,
+  "Beta":    6.957,
+  "Gamma":   7.459,
+  "Delta":   7.939,
+  "Epsilon": 9.095,
+  "Zeta":    9.473,
+  "Eta":     10.162,
+  "Theta":   10.782
+};
+var DAN_ORDER = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta"];
+var DAN_ORDER_START = 11;
+
+var _DAN_BOUNDARIES = (function () {
+  var means = DAN_ORDER.map(function (d) { return DAN_MEANS[d]; });
+  var boundaries = [];
+  for (var i = 0; i < DAN_ORDER.length; i++) {
+    var mean = means[i];
+    var lower = i > 0 ? (means[i - 1] + mean) / 2 : mean - ((means[1] + mean) / 2 - mean);
+    var upper = i < means.length - 1 ? (mean + means[i + 1]) / 2 : mean + (mean - means[i - 1]) / 2;
+    boundaries.push([lower, upper]);
+  }
+  return boundaries;
+})();
+
+function getDanielTier(diff) {
+  if (diff < _DAN_BOUNDARIES[0][0]) return { label: "<" + DAN_ORDER[0] + " low", numeric: "N/A" };
+  if (diff >= _DAN_BOUNDARIES[_DAN_BOUNDARIES.length - 1][1]) return { label: ">" + DAN_ORDER[DAN_ORDER.length - 1] + " high", numeric: "N/A" };
+
+  for (var i = 0; i < DAN_ORDER.length; i++) {
+    var dan = DAN_ORDER[i];
+    var lower = _DAN_BOUNDARIES[i][0];
+    var upper = _DAN_BOUNDARIES[i][1];
+    if (lower <= diff && diff < upper) {
+      var t = Math.max(0, Math.min((diff - lower) / (upper - lower), 1));
+      var numeric = (DAN_ORDER_START + i + t).toFixed(2);
+      var label;
+      if (t < 1 / 3) label = dan + " low";
+      else if (t < 2 / 3) label = dan + " mid";
+      else label = dan + " high";
+      return { label: label, numeric: numeric };
+    }
+  }
+  return { label: "? ? ? ? ?", numeric: "N/A" };
 }
 
 function getDifficultyTier(sr, lnRatio, keys) {
