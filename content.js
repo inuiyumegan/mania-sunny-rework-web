@@ -109,7 +109,7 @@
   function showBadge(sr, pp, tierLabel, keys) {
     var badge = createBadge();
     var color = srColor(sr);
-    var isSup = keys === 4 || keys === 6 || keys === 7;
+    var isSup = keys === 4 || keys === 6 || keys === 7 || keys === 10;
     var tierHtml = (tierLabel && isSup) ? '<span class="sunny-sr-tier" style="color:' + color + ';">' + escapeHtml(tierLabel) + '</span>' : '';
     var keysHtml = isSup ? '<span class="sunny-sr-keys" style="color:' + color + ';">' + keys + 'K</span>' : '';
     var ppRounded = pp > 10 ? Math.round(pp) : pp.toFixed(1);
@@ -282,7 +282,7 @@
       var artist = getArtist();
       var mapper = getMapper();
       var stats = analyzeMap(parser);
-      var isSupKeys = stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7;
+      var isSupKeys = stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7 || stats.columnCount === 10;
       var tier = { label: '' };
       if (isSupKeys) {
         var hasLN = stats.lnRatio >= 0.15;
@@ -292,7 +292,7 @@
         if (stats.columnCount === 4) {
           rcSR = (danielSR >= DANIEL_THRESHOLD) ? danielSR : sr;
         }
-        if (hasLN) rcSR = srHO != null ? srHO : sr;
+        if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) rcSR = srHO != null ? srHO : sr;
         var rcTier = getRCTier(rcSR, stats.columnCount);
         if (rcTier) {
           tier.label = rcTier;

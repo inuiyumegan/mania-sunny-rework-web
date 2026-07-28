@@ -79,7 +79,7 @@ function tierAbbr(name) {
     name = name.slice(2);
   }
   var s = name;
-  s = s.replace(/Regular /g, "reg").replace(/Reform /g, "rf").replace(/Intro /g, "intro ");
+  s = s.replace(/Regular /g, "reg").replace(/Reform /g, "rf").replace(/Intro /g, "intro ").replace(/Level /g, "LV ").replace(/Wild /g, "wild ");
   s = s.replace(/Alpha/g, "α").replace(/Beta/g, "β").replace(/Gamma/g, "γ").replace(/Delta/g, "δ");
   s = s.replace(/Epsilon/g, "ε").replace(/Zeta/g, "ζ").replace(/Eta/g, "η").replace(/Theta/g, "θ");
   s = s.replace(/Azimuth/g, "ψ").replace(/Zenith/g, "ζ").replace(/Stellium/g, "★");
@@ -105,11 +105,13 @@ function tierAbbr(name) {
   return prefix + s;
 }
 
-function getRCTier(sr, keys) {
-  if (keys === 6) return intervalLookup(sr, RC6K, "Unknown RC");
+function getRCTier(sr, keys, mode) {
+  if (keys === 10) return intervalLookup(sr, RC10K, "Unknown RC");
+  if (keys === 7 && mode === 'wild') return intervalLookup(sr, WILD_7K, "Unknown RC");
   if (keys === 7) return intervalLookup(sr, RC7K, "Unknown RC");
+  if (keys === 6) return intervalLookup(sr, RC6K, "Unknown RC");
   if (keys === 4) return intervalLookup(sr, RC4K_REFORM, "Unknown RC");
-  return null; // Only 4/6/7K supported
+  return null;
 }
 
 function getLNTier(sr, keys) {
@@ -168,12 +170,59 @@ var RC7K = [
     [7.8134,7.9242,"Regular 9 mid/high"],[7.9242,8.035,"Regular 9 high"],[8.035,8.1458,"Regular 10 low"],
     [8.1458,8.2566,"Regular 10 mid/low"],[8.2566,8.357,"Regular 10 mid"],[8.357,8.447,"Regular 10 mid/high"],
     [8.447,8.537,"Regular 10 high"],[8.537,8.627,"Regular Gamma low"],[8.627,8.717,"Regular Gamma mid/low"],
-    [8.717,8.8079,"Regular Gamma mid"],[8.8079,8.8997,"Regular Gamma mid/high"],[8.8997,8.9915,"Regular Gamma high"],
+    [8.717,8.8079,"Regular Gamma mid"],    [8.8079,8.8997,"Regular Gamma mid/high"],[8.8997,8.9915,"Regular Gamma high"],
     [8.9915,9.0833,"Regular Azimuth low"],[9.0833,9.1751,"Regular Azimuth mid/low"],[9.1751,9.2921,"Regular Azimuth mid"],
     [9.2921,9.4343,"Regular Azimuth mid/high"],[9.4343,9.5765,"Regular Azimuth high"],[9.5765,9.7187,"Regular Zenith low"],
     [9.7187,9.8609,"Regular Zenith mid/low"],[9.8609,9.9728,"Regular Zenith mid"],[9.9728,10.0544,"Regular Zenith mid/high"],
     [10.0544,10.136,"Regular Zenith high"],[10.136,10.2176,"Regular Stellium low"],[10.2176,10.2992,"Regular Stellium mid/low"],
-    [10.2992,10.3808,"Regular Stellium mid"],[10.3808,10.4624,"Regular Stellium mid/high"],[10.4624,10.544,"Regular Stellium high"]
+    [10.2992,10.3737,"Regular Stellium mid"],[10.3737,10.4371,"Regular Stellium mid/high"],[10.4371,10.5006,"Regular Stellium high"],
+    [10.5006,10.564,"Wild 8 low"],[10.564,10.6274,"Wild 8 mid/low"],[10.6274,10.6907,"Wild 8 mid"],
+    [10.6907,10.7539,"Wild 8 mid/high"],[10.7539,10.8171,"Wild 8 high"],[10.8171,10.8803,"Wild 9 low"],
+    [10.8803,10.9435,"Wild 9 mid/low"],[10.9435,11.0067,"Wild 9 mid"],[11.0067,11.0699,"Wild 9 mid/high"],
+    [11.0699,11.1331,"Wild 9 high"]
+];
+
+var WILD_7K = [
+    [8.3359,8.3947,"wild 1 low"],[8.3947,8.4535,"wild 1 mid/low"],[8.4535,8.5123,"wild 1 mid"],
+    [8.5123,8.5711,"wild 1 mid/high"],[8.5711,8.6298,"wild 1 high"],[8.6298,8.6886,"wild 2 low"],
+    [8.6886,8.7474,"wild 2 mid/low"],[8.7474,8.7924,"wild 2 mid"],[8.7924,8.8237,"wild 2 mid/high"],
+    [8.8237,8.855,"wild 2 high"],[8.855,8.8862,"wild 3 low"],[8.8862,8.9175,"wild 3 mid/low"],
+    [8.9175,8.9651,"wild 3 mid"],[8.9651,9.0292,"wild 3 mid/high"],[9.0292,9.0932,"wild 3 high"],
+    [9.0932,9.1573,"wild 4 low"],[9.1573,9.2213,"wild 4 mid/low"],[9.2213,9.2942,"wild 4 mid"],
+    [9.2942,9.376,"wild 4 mid/high"],[9.376,9.4578,"wild 4 high"],[9.4578,9.5396,"wild 5 low"],
+    [9.5396,9.6214,"wild 5 mid/low"],[9.6214,9.6932,"wild 5 mid"],[9.6932,9.755,"wild 5 mid/high"],
+    [9.755,9.8169,"wild 5 high"],[9.8169,9.8787,"wild 6 low"],[9.8787,9.9405,"wild 6 mid/low"],
+    [9.9405,10,"wild 6 mid"],[10,10.0572,"wild 6 mid/high"],[10.0572,10.1144,"wild 6 high"],
+    [10.1144,10.1716,"wild 7 low"],[10.1716,10.2288,"wild 7 mid/low"],[10.2288,10.2976,"wild 7 mid"],
+    [10.2976,10.3779,"wild 7 mid/high"],[10.3779,10.4583,"wild 7 high"],[10.4583,10.5386,"wild 8 low"],
+    [10.5386,10.619,"wild 8 mid/low"],[10.619,10.6907,"wild 8 mid"],[10.6907,10.7539,"wild 8 mid/high"],
+    [10.7539,10.8171,"wild 8 high"],[10.8171,10.8803,"wild 9 low"],[10.8803,10.9435,"wild 9 mid/low"],
+    [10.9435,11.0067,"wild 9 mid"],[11.0067,11.0699,"wild 9 mid/high"],[11.0699,11.1331,"wild 9 high"]
+];
+
+var RC10K = [
+    [1.5427,1.6496,"Level 0 low"],[1.6496,1.7565,"Level 0 mid/low"],[1.7565,1.8635,"Level 0 mid"],
+    [1.8635,1.9704,"Level 0 mid/high"],[1.9704,2.0773,"Level 0 high"],[2.0773,2.1842,"Level 1 low"],
+    [2.1842,2.2911,"Level 1 mid/low"],[2.2911,2.3889,"Level 1 mid"],[2.3889,2.4778,"Level 1 mid/high"],
+    [2.4778,2.5666,"Level 1 high"],[2.5666,2.6554,"Level 2 low"],[2.6554,2.7443,"Level 2 mid/low"],
+    [2.7443,2.8622,"Level 2 mid"],[2.8622,3.0092,"Level 2 mid/high"],[3.0092,3.1563,"Level 2 high"],
+    [3.1563,3.3033,"Level 3 low"],[3.3033,3.4503,"Level 3 mid/low"],[3.4503,3.5455,"Level 3 mid"],
+    [3.5455,3.5887,"Level 3 mid/high"],[3.5887,3.632,"Level 3 high"],[3.632,3.6752,"Level 4 low"],
+    [3.6752,3.7184,"Level 4 mid/low"],[3.7184,3.7864,"Level 4 mid"],[3.7864,3.879,"Level 4 mid/high"],
+    [3.879,3.9717,"Level 4 high"],[3.9717,4.0643,"Level 5 low"],[4.0643,4.157,"Level 5 mid/low"],
+    [4.157,4.2547,"Level 5 mid"],[4.2547,4.3575,"Level 5 mid/high"],[4.3575,4.4602,"Level 5 high"],
+    [4.4602,4.563,"Level 6 low"],[4.563,4.6658,"Level 6 mid/low"],[4.6658,4.7767,"Level 6 mid"],
+    [4.7767,4.8956,"Level 6 mid/high"],[4.8956,5.0146,"Level 6 high"],[5.0146,5.1335,"Level 7 low"],
+    [5.1335,5.2525,"Level 7 mid/low"],[5.2525,5.3615,"Level 7 mid"],[5.3615,5.4607,"Level 7 mid/high"],
+    [5.4607,5.5598,"Level 7 high"],[5.5598,5.659,"Level 8 low"],[5.659,5.7581,"Level 8 mid/low"],
+    [5.7581,5.8642,"Level 8 mid"],[5.8642,5.9773,"Level 8 mid/high"],[5.9773,6.0904,"Level 8 high"],
+    [6.0904,6.2034,"Level 9 low"],[6.2034,6.3165,"Level 9 mid/low"],[6.3165,6.4809,"Level 9 mid"],
+    [6.4809,6.6967,"Level 9 mid/high"],[6.6967,6.9125,"Level 9 high"],[6.9125,7.1283,"Level 10 low"],
+    [7.1283,7.3441,"Level 10 mid/low"],[7.3441,7.4888,"Level 10 mid"],[7.4888,7.5624,"Level 10 mid/high"],
+    [7.5624,7.6361,"Level 10 high"],[7.6361,7.7097,"Level XI low"],[7.7097,7.7834,"Level XI mid/low"],
+    [7.7834,7.8989,"Level XI mid"],[7.8989,8.0564,"Level XI mid/high"],[8.0564,8.2139,"Level XI high"],
+    [8.2139,8.3714,"Level V low"],[8.3714,8.5289,"Level V mid/low"],[8.5289,8.6864,"Level V mid"],
+    [8.6864,8.8439,"Level V mid/high"],[8.8439,9.0014,"Level V high"]
 ];
 
 var LN6K = [
