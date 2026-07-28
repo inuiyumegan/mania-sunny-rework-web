@@ -96,12 +96,14 @@ function tierAbbr(name) {
     var parts = base.split(/\s+/);
     var last = parts[parts.length - 1];
     var num = last.match(/(\d+)$/);
+    if (!num) { last = last.replace(/^(reg|rf|wild|intro|LV)\s*/, ''); }
     return base + "/" + (num ? num[1] : last) + "⁺";
   });
   s = s.replace(/(.+)\s+(mid\/low)/g, function(m, base) {
     var parts = base.split(/\s+/);
     var last = parts[parts.length - 1];
     var num = last.match(/(\d+)$/);
+    if (!num) { last = last.replace(/^(reg|rf|wild|intro|LV)\s*/, ''); }
     return base + "/" + (num ? num[1] : last) + "⁻";
   });
   s = s.replace(/\s+low/g, "⁻");
