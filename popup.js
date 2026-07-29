@@ -23,8 +23,14 @@
     if (Math.abs(rate - 1.0) < 0.001) return srNM;
     if (srDT && srDT > srNM && Math.abs(rate - 1.5) < 0.001) return srDT;
     if (srHT && srHT < srNM && Math.abs(rate - 0.75) < 0.001) return srHT;
-    if (srDT && srDT > srNM) {
+    if (rate > 1.0 && srDT && srDT > srNM) {
+      // DT range: use exponent derived from DT/NM ratio
       var k = Math.log(srDT / srNM) / Math.log(1.5);
+      return srNM * Math.pow(rate, k);
+    }
+    if (rate < 1.0 && srHT && srHT > 0 && srHT < srNM) {
+      // HT range: use exponent derived from HT/NM ratio (slower speeds decay faster)
+      var k = Math.log(srNM / srHT) / Math.log(1.0 / 0.75);
       return srNM * Math.pow(rate, k);
     }
     return srNM * rate;
