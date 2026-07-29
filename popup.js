@@ -6,6 +6,7 @@
   var lastBeatmapId = null;
   var activeAlgo = 'auto';
   var active7KMode = 'auto';
+  var active6KMode = 'rating';
   var activeMods = {};
 
   function rcLookup(sr, keys, mode) {
@@ -58,6 +59,37 @@
   }
 
   function formatTime(sec) { if (!sec || sec <= 0) return '--'; var m = Math.floor(sec / 60); var s = Math.floor(sec % 60); return m + ':' + (s < 10 ? '0' : '') + s; }
+
+  // Difficulty constant (定数) from Sunny SR for mania-rating-gui style
+  function calcDiffConst(sr) { return sr * 200.0 / 81.0 + 7.0 / 6.0; }
+
+  function calcRating(diffConst, acc) {
+    if (acc < 0 || acc > 100) return 0;
+    var diffLower = Math.max(diffConst - 3.0, 0);
+    if (acc <= 80.0) return 0;
+    if (acc <= 93.0) return diffLower * (acc - 80.0) / 13.0;
+    if (acc <= 96.0) return (diffConst - diffLower) * (acc - 93.0) / 3.0 + diffLower;
+    if (acc <= 98.0) {
+      var accXtra = acc - 96.0;
+      return 1.5 * accXtra / (3.0 - accXtra / 2.0) + diffConst;
+    }
+    if (acc <= 99.5) {
+      var accXtra2 = (acc - 98.0) / 1.5;
+      return 4.0 * accXtra2 / (3.0 - accXtra2) + diffConst + 1.5;
+    }
+    var accXtra3 = (acc - 99.5) * 2.0;
+    return 4.0 * accXtra3 / (3.0 - accXtra3) + diffConst + 3.5;
+  }
+
+  // 310-weight accuracy used in mania-rating-gui rating formula
+  function getRatingAcc() {
+    var p320 = parseInt($('j-320').value) || 0, p300 = parseInt($('j-300').value) || 0;
+    var p200 = parseInt($('j-200').value) || 0, p100 = parseInt($('j-100').value) || 0;
+    var p50 = parseInt($('j-50').value) || 0, miss = parseInt($('j-0').value) || 0;
+    var total = p320 + p300 + p200 + p100 + p50 + miss;
+    if (total === 0) return 100;
+    return (p320 * 310 + p300 * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (total * 310) * 100;
+  }
 
   function getActiveMods() {
     var mods = [];
@@ -176,7 +208,12 @@
       var hasLN = effLnRatio >= 0.15;
       var keySup = mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7 || mapData.columnCount === 10;
       var rcSR, lnSR, tier = '';
-      if (keySup) {
+      if (mapData.columnCount === 6 && active6KMode === 'rating') {
+        // 6K Rating mode: show rating / diff_const instead of CT Dan tier
+        var ratingAcc = getRatingAcc();
+        var dc = calcDiffConst(sr);
+        tier = calcRating(dc, ratingAcc).toFixed(2) + ' / ' + dc.toFixed(2);
+      } else if (keySup) {
         var danielR = mapData.columnCount === 4 ? estimateSR(mapData.danielSR, mapData.danielSR_DT, mapData.danielSR_HT, r) : 0;
         var useDanielForRC = (mapData.columnCount === 4 && danielR >= 6.365);
         var tierNM, tierDT, tierHT;
@@ -273,6 +310,12 @@
       btns[2].style.display = 'none';
       var active = active7KMode;
       for (var j = 0; j < 2; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
+    } else if (keys === 6) {
+      btns[0].textContent = 'Rating'; btns[0].dataset.mode = 'rating';
+      btns[1].textContent = 'CT Dan'; btns[1].dataset.mode = 'ctdan';
+      btns[2].style.display = 'none';
+      var active = active6KMode;
+      for (var j = 0; j < 2; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
     }
   }
 
@@ -285,6 +328,10 @@
           active7KMode = mode;
           setupAlgoBar(7);
           chrome.storage.local.set({ sunny7KMode: mode });
+        } else if (mapData && mapData.columnCount === 6) {
+          active6KMode = mode;
+          setupAlgoBar(6);
+          chrome.storage.local.set({ sunny6KMode: mode });
         } else {
           activeAlgo = mode;
           setupAlgoBar(4);
@@ -298,6 +345,9 @@
     });
     chrome.storage.local.get(['sunny7KMode'], function (r) {
       if (r.sunny7KMode) { active7KMode = r.sunny7KMode; }
+    });
+    chrome.storage.local.get(['sunny6KMode'], function (r) {
+      if (r.sunny6KMode) { active6KMode = r.sunny6KMode; }
     });
   }
 
@@ -342,8 +392,8 @@
       $('stat-od').value = md.od >= 0 ? md.od : 5;
     }
     $('status').textContent = 'Ready';
-    $('algo-bar').style.display = (md.columnCount === 4 || md.columnCount === 7) ? 'flex' : 'none';
-    if (md.columnCount === 4 || md.columnCount === 7) setupAlgoBar(md.columnCount);
+    $('algo-bar').style.display = (md.columnCount === 4 || md.columnCount === 6 || md.columnCount === 7) ? 'flex' : 'none';
+    if (md.columnCount === 4 || md.columnCount === 6 || md.columnCount === 7) setupAlgoBar(md.columnCount);
     updateAll();
   }
   function initInputs() {
