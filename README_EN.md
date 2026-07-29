@@ -4,6 +4,8 @@ A Chrome extension (compatible with Edge and other Chromium browsers) for osu!ma
 
 > [中文版 (Chinese)](./README.md)
 
+![Extension Overview](graphs/1_whole_web.png)
+
 ---
 
 ## Features
@@ -100,27 +102,35 @@ For HO / IN modes, the raw `.osu` text is transformed before running the NM algo
 
 #### 4K
 
+![4K Features](graphs/2_4k_feature.png)
+
 - **Auto**: Uses Daniel algorithm when 4K Daniel difficulty ≥ 6.365, otherwise Sunny Rework.
 - **Daniel**: Forces Daniel algorithm for Alpha ~ Theta tier estimation (treats LNs as rice).
-- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports Intro 1 to Theta.
+- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports Intro 1 to Theta (DDMythical's RC Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta Dan).
 
 If LN ratio ≥ 15%, both RC and LN tiers are displayed, e.g. `rf8/8⁻ | LN 11⁻`.
 
 #### 6K
 
+![6K Features](graphs/3_6k_feature.png)
+
 - **Rating**: Displays the **difficulty constant** (`diff_const = SR × 200/81 + 7/6`) and computes **Rating** from 310-weight accuracy (used internally only, not displayed).
-- **Sunny**: Displays the RC6K tier table (CT Dan).
+- **Sunny**: Displays the RC6K tier table (Arkman's Regular Dan & sunnyxxy's LN Dan).
 
 The badge defaults to showing the difficulty constant for 6K beatmaps.
 
 #### 7K
 
-- **Auto**: Uses the Regular 7K tier table.
-- **Wild**: Uses the Wild 7K tier table, only for rice charts above 10 Dan (Jinjin Dan).
+![7K Features](graphs/4_7k_feature.png)
+
+- **Auto**: Uses the Regular/LN 7K tier table, and supplements with Wild 8 and 9 Dan (tyrcs's Wild Dan) above Stellium Dan.
+- **Wild**: Uses the Wild 7K tier table, only for rice charts above 10 Dan (Jinjin's Dan).
 
 #### 10K
 
-Directly displays the RC10K tier table with no additional mode switch.
+![10K Features](graphs/5_10k_feature.png)
+
+Directly displays the RC10K tier table with no additional mode switch (CT's Dan).
 
 ### PP Calculation
 
@@ -140,6 +150,8 @@ Their difference is shown as `+/-Xpp` in the badge.
 ### Custom OD
 
 When OD is changed, the Popup sends a `recalculateOd` message to the Content Script, which re-runs NM/DT/HT algorithms with the new OD and updates storage — no page refresh needed.
+
+![OD and Judgment Input](graphs/6_change_odnacc_feature.png)
 
 ---
 

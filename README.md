@@ -4,6 +4,8 @@
 
 > [English Version](./README_EN.md)
 
+![扩展全貌](graphs/1_whole_web.png)
+
 ---
 
 ## 功能
@@ -98,27 +100,35 @@ HO / IN 模式会先在原始 `.osu` 文本上做变换，再跑 NM 算法，DT/
 
 #### 4K
 
+![4K 功能](graphs/2_4k_feature.png)
+
 - **Auto**：当 Daniel 4K 难度 ≥ 6.365 时使用 Daniel 算法，否则使用 Sunny Rework。
 - **Daniel**：强制使用 Daniel 算法估算 Alpha ~ Theta 段位（该算法将面视为米处理）。
-- **Sunny**：强制使用 Sunny Rework 的 RC4K_Reform 段位表，支持 Intro 1 到 Theta。
+- **Sunny**：强制使用 Sunny Rework 的 RC4K_Reform 段位表，支持 Intro 1 到 Theta（DDMythical's RC Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta Dan）。
 
 若 LN 占比 ≥ 15%，会同时显示 RC 段位和 LN 段位，格式如 `rf8/8⁻ | LN 11⁻`。
 
 #### 6K
 
+![6K 功能](graphs/3_6k_feature.png)
+
 - **Rating**：显示 **定数**（Difficulty Constant），公式为 `定数 = SR × 200/81 + 7/6`；并基于 310 权重 Acc （仅在算法内使用，不显示）计算 **Rating**。
-- **Sunny**：显示 RC6K 段位表（CT Dan）。
+- **Sunny**：显示 RC6K 段位表（Arkman's Regular Dan & sunnyxxy's LN Dan）。
 
 Badge 右下角常驻面板对 6K 谱面默认显示定数。
 
 #### 7K
 
-- **Auto**：使用 Regular 7K 段位表。
-- **Wild**：使用 Wild 7K 段位表，仅支持 10 Dan（Jinjin Dan）以上的米图。
+![7K 功能](graphs/4_7k_feature.png)
+
+- **Auto**：使用 Regular/LN 7K 段位表，并在 Stellium Dan 以上补充（tyrcs's Wild Dan） wild 8 和 9 Dan。
+- **Wild**：使用 Wild 7K 段位表，仅支持 10 Dan（Jinjin's Dan）以上的米图。
 
 #### 10K
 
-直接显示 RC10K 段位表，无额外模式切换。
+![10K 功能](graphs/5_10k_feature.png)
+
+直接显示 RC10K 段位表，无额外模式切换（CT's Dan）。
 
 ### PP 计算
 
@@ -138,6 +148,8 @@ Badge 右下角常驻面板对 6K 谱面默认显示定数。
 ### 自定义 OD
 
 修改 OD 后，Popup 会向 Content Script 发送 `recalculateOd` 消息，后端用新 OD 重新跑 NM/DT/HT 算法并更新 storage，无需刷新页面。
+
+![OD 与判定输入](graphs/6_change_odnacc_feature.png)
 
 ---
 
