@@ -193,7 +193,9 @@
         tier = useDanielForRC ? tierAbbr(getDanielTier(rcSR).label) : rcLookup(rcSR, mapData.columnCount, mapData.columnCount === 7 ? active7KMode : undefined);
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
           // LN tier always uses Sunny SR, bypass algorithm selection
-          var lnNM = mapData.sr, lnDT = mapData.sr_DT, lnHT = mapData.sr_HT;
+          var lnNM = inMod ? (mapData.srIN != null ? mapData.srIN : mapData.sr) : mapData.sr;
+          var lnDT = inMod ? (mapData.srIN_DT != null ? mapData.srIN_DT : mapData.sr_DT) : mapData.sr_DT;
+          var lnHT = inMod ? (mapData.srIN_HT != null ? mapData.srIN_HT : mapData.sr_HT) : mapData.sr_HT;
           lnSR = estimateSR(lnNM, lnDT, lnHT, r);
           var lnTier = lnLookup(lnSR, mapData.columnCount);
           if (lnTier) tier += ' | ' + lnTier;
