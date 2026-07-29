@@ -107,14 +107,14 @@ HO / IN 模式会先在原始 `.osu` 文本上做变换，再跑 NM 算法，DT/
 #### 6K
 
 - **Rating**：显示 **定数**（Difficulty Constant），公式为 `定数 = SR × 200/81 + 7/6`；并基于 310 权重 Acc （仅在算法内使用，不显示）计算 **Rating**。
-- **Sunny**：显示 RC6K 段位表（CT Dan）。
+- **Sunny**：显示 RC6K 段位表（Arkman's Regular Dan）。
 
 Badge 右下角常驻面板对 6K 谱面默认显示定数。
 
 #### 7K
 
 - **Auto**：使用 Regular 7K 段位表。
-- **Wild**：使用 Wild 7K 段位表，仅支持 10 Dan（Jinjin Dan）以上的米图。
+- **Wild**：使用 Wild 7K 段位表，仅支持 10 Dan（Jinjin's Dan）以上的米图。
 
 #### 10K
 
