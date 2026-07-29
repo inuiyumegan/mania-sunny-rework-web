@@ -78,7 +78,7 @@
       return 4.0 * accXtra2 / (3.0 - accXtra2) + diffConst + 1.5;
     }
     var accXtra3 = (acc - 99.5) * 2.0;
-    return 4.0 * accXtra3 / (3.0 - accXtra3) + diffConst + 3.5;
+    return 2.0 * accXtra3 / (3.0 - accXtra3) + diffConst + 3.5;
   }
 
   // 310-weight accuracy used in mania-rating-gui rating formula
@@ -210,9 +210,13 @@
       var rcSR, lnSR, tier = '';
       if (mapData.columnCount === 6 && active6KMode === 'rating') {
         // 6K Rating mode: show rating / diff_const instead of CT Dan tier
-        var ratingAcc = getRatingAcc();
-        var dc = calcDiffConst(sr);
-        tier = calcRating(dc, ratingAcc).toFixed(2) + ' / ' + dc.toFixed(2);
+        if (!sr || sr <= 0) {
+          tier = '-';
+        } else {
+          var ratingAcc = getRatingAcc();
+          var dc = calcDiffConst(sr);
+          tier = calcRating(dc, ratingAcc).toFixed(2) + ' / ' + dc.toFixed(2);
+        }
       } else if (keySup) {
         var danielR = mapData.columnCount === 4 ? estimateSR(mapData.danielSR, mapData.danielSR_DT, mapData.danielSR_HT, r) : 0;
         var useDanielForRC = (mapData.columnCount === 4 && danielR >= 6.365);
