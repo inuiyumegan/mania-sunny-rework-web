@@ -316,7 +316,7 @@
       for (var j = 0; j < 2; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
     } else if (keys === 6) {
       btns[0].textContent = 'Rating'; btns[0].dataset.mode = 'rating';
-      btns[1].textContent = 'CT Dan'; btns[1].dataset.mode = 'ctdan';
+      btns[1].textContent = 'Sunny'; btns[1].dataset.mode = 'sunny';
       btns[2].style.display = 'none';
       var active = active6KMode;
       for (var j = 0; j < 2; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
@@ -351,7 +351,10 @@
       if (r.sunny7KMode) { active7KMode = r.sunny7KMode; }
     });
     chrome.storage.local.get(['sunny6KMode'], function (r) {
-      if (r.sunny6KMode) { active6KMode = r.sunny6KMode; }
+      if (r.sunny6KMode) {
+        // Migrate legacy CT Dan mode value to Sunny
+        active6KMode = r.sunny6KMode === 'ctdan' ? 'sunny' : r.sunny6KMode;
+      }
     });
   }
 
