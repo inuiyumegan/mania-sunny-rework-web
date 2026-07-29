@@ -106,6 +106,8 @@
     return d.innerHTML;
   }
 
+  function calcDiffConst(sr) { return sr * 200.0 / 81.0 + 7.0 / 6.0; }
+
   function showBadge(sr, pp, tierLabel, keys) {
     var badge = createBadge();
     var color = srColor(sr);
@@ -304,6 +306,10 @@
             if (lnTier) tier.label = rcTier + ' || ' + lnTier;
           }
         }
+      }
+      if (stats.columnCount === 6) {
+        // 6K badge defaults to Rating mode: show difficulty constant only
+        tier.label = sr > 0 ? calcDiffConst(sr).toFixed(2) : '';
       }
       var headerTitle = title;
       var headerSub = '[' + stats.columnCount + 'K]';
