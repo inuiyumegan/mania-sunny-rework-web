@@ -4,7 +4,7 @@ A Chrome extension (compatible with Edge and other Chromium browsers) for osu!ma
 
 > [中文版 (Chinese)](./README.md)
 
-![Extension Overview](graphs/1_whole_web.png)
+<img src="graphs/1_whole_web.png" width="700" alt="Extension Overview">
 
 ---
 
@@ -102,7 +102,7 @@ For HO / IN modes, the raw `.osu` text is transformed before running the NM algo
 
 #### 4K
 
-![4K Features](graphs/2_4k_feature.png)
+<img src="graphs/2_4k_feature.png" width="450" alt="4K Features">
 
 - **Auto**: Uses Daniel algorithm when 4K Daniel difficulty ≥ 6.365, otherwise Sunny Rework.
 - **Daniel**: Forces Daniel algorithm for Alpha ~ Theta tier estimation (treats LNs as rice).
@@ -112,7 +112,7 @@ If LN ratio ≥ 15%, both RC and LN tiers are displayed, e.g. `rf8/8⁻ | LN 11�
 
 #### 6K
 
-![6K Features](graphs/3_6k_feature.png)
+<img src="graphs/3_6k_feature.png" width="450" alt="6K Features">
 
 - **Rating**: Displays the **difficulty constant** (`diff_const = SR × 200/81 + 7/6`) and computes **Rating** from 310-weight accuracy (used internally only, not displayed).
 - **Sunny**: Displays the RC6K tier table (Arkman's Regular Dan & sunnyxxy's LN Dan).
@@ -121,14 +121,14 @@ The badge defaults to showing the difficulty constant for 6K beatmaps.
 
 #### 7K
 
-![7K Features](graphs/4_7k_feature.png)
+<img src="graphs/4_7k_feature.png" width="450" alt="7K Features">
 
 - **Auto**: Uses the Regular/LN 7K tier table, and supplements with Wild 8 and 9 Dan (tyrcs's Wild Dan) above Stellium Dan.
 - **Wild**: Uses the Wild 7K tier table, only for rice charts above 10 Dan (Jinjin's Dan).
 
 #### 10K
 
-![10K Features](graphs/5_10k_feature.png)
+<img src="graphs/5_10k_feature.png" width="450" alt="10K Features">
 
 Directly displays the RC10K tier table with no additional mode switch (CT's Dan).
 
@@ -151,7 +151,7 @@ Their difference is shown as `+/-Xpp` in the badge.
 
 When OD is changed, the Popup sends a `recalculateOd` message to the Content Script, which re-runs NM/DT/HT algorithms with the new OD and updates storage — no page refresh needed.
 
-![OD and Judgment Input](graphs/6_change_odnacc_feature.png)
+<img src="graphs/6_change_odnacc_feature.png" width="450" alt="OD and Judgment Input">
 
 ---
 
