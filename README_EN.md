@@ -6,6 +6,8 @@ A Chrome extension (compatible with Edge and other Chromium browsers) for osu!ma
 
 <img src="graphs/1_whole_web.png" width="700" alt="Extension Overview">
 
+Popup panel in the top-right corner displays detailed information; persistent badge in the bottom-right corner shows basic info.
+
 ---
 
 ## Features
@@ -48,7 +50,7 @@ A Chrome extension (compatible with Edge and other Chromium browsers) for osu!ma
 | **DT / NM / HT** | Three columns showing 1.5x / 1.0x / 0.75x star ratings and PP |
 | **Speed Slider** | Custom speed from 0.5x ~ 2.0x with preset shortcut buttons |
 | **Judgment Input** | Enter 320/300/200/100/50/miss counts for real-time PP |
-| **Algorithm Switch** | 4K: Auto / Daniel / Sunny; 6K: Rating / Sunny; 7K: Auto / Wild |
+| **Algorithm Switch** | 4K: Auto / Sunny; 6K: Rating / Sunny; 7K: Auto / Wild |
 | **MOD Buttons** | Toggle SV1/SV2/NF/EZ/HO/IN, auto-recalculates |
 | **Custom OD** | Modify OD value, triggers automatic recalculation |
 
@@ -105,8 +107,7 @@ For HO / IN modes, the raw `.osu` text is transformed before running the NM algo
 <img src="graphs/2_4k_feature.png" width="450" alt="4K Features">
 
 - **Auto**: Uses Daniel algorithm when 4K Daniel difficulty ≥ 6.365, otherwise Sunny Rework.
-- **Daniel**: Forces Daniel algorithm for Alpha ~ Theta tier estimation (treats LNs as rice).
-- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports Intro 1 to Theta (DDMythical's RC Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta Dan).
+- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports RC Intro 1 to Theta Dan, LN 1 to 20 Dan (DDMythical's Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta Dan & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan & Lnlism's 17 18 Dan).
 
 If LN ratio ≥ 15%, both RC and LN tiers are displayed, e.g. `rf8/8⁻ | LN 11⁻`.
 
@@ -114,7 +115,7 @@ If LN ratio ≥ 15%, both RC and LN tiers are displayed, e.g. `rf8/8⁻ | LN 11�
 
 <img src="graphs/3_6k_feature.png" width="450" alt="6K Features">
 
-- **Rating**: Displays the **difficulty constant** (`diff_const = SR × 200/81 + 7/6`) and computes **Rating** from 310-weight accuracy (used internally only, not displayed).
+- **Rating**: Displays the **difficulty constant** based on [ManiaMapWorkshop](https://github.com/IceRain5491/ManiaMapWorkshop); computes **Rating** from 310-weight accuracy (used internally only, not displayed).
 - **Sunny**: Displays the RC6K tier table (Arkman's Regular Dan & sunnyxxy's LN Dan).
 
 The badge defaults to showing the difficulty constant for 6K beatmaps.
@@ -123,7 +124,7 @@ The badge defaults to showing the difficulty constant for 6K beatmaps.
 
 <img src="graphs/4_7k_feature.png" width="450" alt="7K Features">
 
-- **Auto**: Uses the Regular/LN 7K tier table, and supplements with Wild 8 and 9 Dan (tyrcs's Wild Dan) above Stellium Dan.
+- **Auto**: Uses the Regular/LN 7K tier table, and supplements with Wild 8 and 9 Dan (tyrcs's Dan) above Stellium Dan.
 - **Wild**: Uses the Wild 7K tier table, only for rice charts above 10 Dan (Jinjin's Dan).
 
 #### 10K
