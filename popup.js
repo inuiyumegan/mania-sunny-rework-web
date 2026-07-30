@@ -231,9 +231,9 @@
           }
         } else {
           // RC map: RC uses Daniel (if rate-adjusted >= 6.365) else Sunny; no LN
-          tierNM = useDanielForRC ? mapData.danielSR : mapData.sr;
-          tierDT = useDanielForRC ? mapData.danielSR_DT : mapData.sr_DT;
-          tierHT = useDanielForRC ? mapData.danielSR_HT : mapData.sr_HT;
+          tierNM = useDanielForRC ? mapData.danielSR : sunnyNM;
+          tierDT = useDanielForRC ? mapData.danielSR_DT : sunnyDT;
+          tierHT = useDanielForRC ? mapData.danielSR_HT : sunnyHT;
         }
         rcSR = estimateSR(tierNM, tierDT, tierHT, r);
         tier = useDanielForRC ? tierAbbr(getDanielTier(rcSR).label) : rcLookup(rcSR, mapData.columnCount, mapData.columnCount === 7 ? active7KMode : undefined);
