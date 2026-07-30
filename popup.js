@@ -155,7 +155,6 @@
     var sunnyVal = mapData[sunnyKey] || mapData['sr' + srSuffix] || 0;
     var danielVal = mapData[danielKey] || 0;
     if (mapData.columnCount === 4) {
-      if (activeAlgo === 'daniel') return danielVal || sunnyVal;
       if (activeAlgo === 'sunny') return sunnyVal;
       if (danielVal > 0 && mapData.danielSR >= 6.36) return danielVal;
     }
@@ -219,7 +218,7 @@
         }
       } else if (keySup) {
         var danielR = mapData.columnCount === 4 ? estimateSR(mapData.danielSR, mapData.danielSR_DT, mapData.danielSR_HT, r) : 0;
-        var useDanielForRC = (mapData.columnCount === 4 && danielR >= 6.365);
+        var useDanielForRC = (mapData.columnCount === 4 && activeAlgo !== 'sunny' && danielR >= 6.365);
         var tierNM, tierDT, tierHT;
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
           // LN map: RC uses Daniel (if rate-adjusted >= 6.365) else srHO; LN uses Sunny
@@ -303,20 +302,22 @@
     var bar = $('algo-bar');
     if (keys === 4) {
       btns[0].textContent = 'Auto'; btns[0].dataset.mode = 'auto';
-      btns[1].textContent = 'Daniel'; btns[1].dataset.mode = 'daniel';
+      btns[1].style.display = 'none';
       btns[2].textContent = 'Sunny'; btns[2].dataset.mode = 'sunny';
-      btns[1].style.display = ''; btns[2].style.display = '';
+      btns[2].style.display = '';
       var active = activeAlgo;
       for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
     } else if (keys === 7) {
       btns[0].textContent = 'Auto'; btns[0].dataset.mode = 'auto';
       btns[1].textContent = 'Wild'; btns[1].dataset.mode = 'wild';
+      btns[1].style.display = '';
       btns[2].style.display = 'none';
       var active = active7KMode;
       for (var j = 0; j < 2; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
     } else if (keys === 6) {
       btns[0].textContent = 'Rating'; btns[0].dataset.mode = 'rating';
       btns[1].textContent = 'Sunny'; btns[1].dataset.mode = 'sunny';
+      btns[1].style.display = '';
       btns[2].style.display = 'none';
       var active = active6KMode;
       for (var j = 0; j < 2; j++) btns[j].classList.toggle('active', btns[j].dataset.mode === active);
@@ -345,7 +346,7 @@
       });
     }
     chrome.storage.local.get(['sunnyAlgo'], function (r) {
-      if (r.sunnyAlgo) { activeAlgo = r.sunnyAlgo; }
+      if (r.sunnyAlgo) { activeAlgo = r.sunnyAlgo === 'daniel' ? 'auto' : r.sunnyAlgo; }
     });
     chrome.storage.local.get(['sunny7KMode'], function (r) {
       if (r.sunny7KMode) { active7KMode = r.sunny7KMode; }
@@ -465,17 +466,21 @@
     }
   }
 
+  var _recalcSeq = 0;
+
   function scheduleOdRecalc(newOd) {
     if (odRecalcTimer) clearTimeout(odRecalcTimer);
-    odRecalcTimer = setTimeout(function () { doOdRecalc(newOd); }, 150);
+    odRecalcTimer = setTimeout(function () { doOdRecalc(newOd); }, 500);
   }
 
   function doOdRecalc(newOd) {
     if (!mapData || !mapData.beatmapId || isNaN(newOd)) return;
+    var seq = ++_recalcSeq;
     $('status').textContent = 'Recalculating...';
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (!tabs[0]) { loadMapData(); return; }
       chrome.tabs.sendMessage(tabs[0].id, { type: 'recalculateOd', od: newOd }, function (resp) {
+        if (seq !== _recalcSeq) return;
         if (chrome.runtime.lastError) { loadMapData(); return; }
         loadMapData();
       });

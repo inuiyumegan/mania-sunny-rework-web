@@ -5,6 +5,13 @@
   var CONTAINER_ID = 'sunny-sr-badge';
   var lastBeatmapId = null;
   var _extInvalidated = false;
+  var activeMode = 'auto';
+
+  chrome.storage.local.get(['sunnyAlgo'], function (r) {
+    if (r.sunnyAlgo) {
+      activeMode = r.sunnyAlgo === 'daniel' ? 'auto' : r.sunnyAlgo;
+    }
+  });
 
   function getBeatmapId() {
     var url = window.location.href;
@@ -288,7 +295,7 @@
       var tier = { label: '' };
       if (isSupKeys) {
         var hasLN = stats.lnRatio >= 0.15;
-        var useDaniel = (stats.columnCount === 4 && danielSR >= 6.365);
+        var useDaniel = activeMode === 'sunny' ? false : (stats.columnCount === 4 && danielSR >= 6.365);
         var rcSR;
         if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) {
           // LN map: RC uses Daniel (if >= 6.365) else srHO; LN uses Sunny
@@ -377,14 +384,14 @@
   function checkAndRun() {
     var beatmapId = getBeatmapId();
     if (!beatmapId) { hideBadge(); lastBeatmapId = null; return; }
+    if (beatmapId === lastBeatmapId) return;
+    hideBadge();
     calculateAndStore(beatmapId);
   }
 
   var _pollTimer = null;
 
   function onUrlChanged() {
-    hideBadge();
-    lastBeatmapId = null;
     checkAndRun();
   }
 
