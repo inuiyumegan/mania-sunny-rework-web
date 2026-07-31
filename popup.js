@@ -9,8 +9,33 @@
   var active6KMode = 'rating';
   var activeMods = {};
 
+  var JOKE_GREEK = {
+    Iota:    { symbol: 'ι', n: 9 },
+    Kappa:   { symbol: 'κ', n: 10 },
+    Lambda:  { symbol: 'λ', n: 11 },
+    Mu:      { symbol: 'μ', n: 12 },
+    Nu:      { symbol: 'ν', n: 13 },
+    Xi:      { symbol: 'ξ', n: 14 },
+    Omicron: { symbol: 'ο', n: 15 },
+    Pi:      { symbol: 'π', n: 16 },
+    Rho:     { symbol: 'ρ', n: 17 }
+  };
+
+  function get4KJokeLabel(label) {
+    if (!label) return null;
+    var m = label.match(/^(Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho)\s/);
+    if (!m) return null;
+    var j = JOKE_GREEK[m[1]];
+    return j.symbol + '(' + j.n + 'th *for joke)';
+  }
+
   function rcLookup(sr, keys, mode) {
-    return tierAbbr(getRCTier(sr, keys, mode));
+    var label = getRCTier(sr, keys, mode);
+    if (keys === 4) {
+      var joke = get4KJokeLabel(label);
+      if (joke) return joke;
+    }
+    return tierAbbr(label);
   }
 
   function lnLookup(sr, keys) {

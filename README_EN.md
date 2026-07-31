@@ -107,7 +107,9 @@ For HO / IN modes, the raw `.osu` text is transformed before running the NM algo
 <img src="graphs/2_4k_feature.png" width="450" alt="4K Features">
 
 - **Auto**: Uses Daniel algorithm when 4K Daniel difficulty ≥ 6.365, otherwise Sunny Rework.
-- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports RC Intro 1 to Theta Dan, LN 1 to 20 Dan (DDMythical's Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta Dan & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan & Lnlism's 17 18 Dan).
+- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports RC Intro 1 to Theta Dan, LN 1 to 20 Dan (DDMythical's Intro 1-Epsilon Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta-Kappa Dan & 3437-114514's Lambda-Rho Dan (for joke) & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan & Lnlism's 17 18 Dan).
+
+*Difficulties above LN 17 and Theta are of limited significance, for entertainment purposes only.*
 
 If LN ratio ≥ 15%, both RC and LN tiers are displayed, e.g. `rf8/8⁻ | LN 11⁻`.
 
