@@ -24,6 +24,14 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* 隐藏 number input 的上下箭头：text-align:center 基于内容区居中，
+   箭头占位会让数字视觉偏左；键盘上下键和鼠标滚轮调节不受影响 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 html, body {
   background: var(--bg) !important;
   border: none !important;
@@ -62,6 +70,7 @@ body {
 .acc-mods-line > * { flex-shrink: 0; }
 .acc-mods-line .acc-val { margin-right: 4px; }
 .acc-mods-line .mods-label { margin-left: 6px; }
+.acc-mods-line .mod-tog { flex: 1; }
 .acc-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
 .acc-val { font-size: 13px; font-weight: 700; color: var(--accent); }
 .judge { font-size: 9px; color: #999; display: flex; flex-direction: column; align-items: center; gap: 1px; }
@@ -79,7 +88,7 @@ body {
 .rate-x { color: var(--text-muted); font-size: 12px; }
 
 #pp-rate {
-  width: 56px; text-align: right;
+  width: 56px; text-align: center;
   background: var(--bg-input); border: 1px solid var(--border);
   border-radius: 4px; color: var(--text); padding: 2px 4px;
   font-size: 11px; font-family: inherit; outline: none;
@@ -165,8 +174,21 @@ body {
 
 .footer { display: flex; justify-content: space-between; align-items: center; }
 .footer-right { display: flex; align-items: center; gap: 6px; }
+.update-link { display: flex; align-items: center; gap: 4px; color: var(--text-muted); transition: color 0.15s; }
+.update-link:hover { color: var(--text); }
+#update-icon-ok { width: 14px; height: 14px; opacity: 0.5; transition: opacity 0.15s, fill 0.15s; }
+.update-link:hover #update-icon-ok { opacity: 0.9; }
+.update-link .u-ring { fill: currentColor; }
+.update-link .u-center, .update-link .u-body { display: none; }
+.update-link:hover .u-ring { fill: var(--text); }
+.update-link.has-update #update-icon-ok { opacity: 1; }
+.update-link.has-update .u-ring { display: none; }
+.update-link.has-update .u-center, .update-link.has-update .u-body { display: inline; }
+.update-link.has-update .u-body { fill: #762837; }
+.update-link.has-update:hover .u-body { fill: #c04a5e; }
 .github-link { color: var(--text-muted); opacity: 0.5; display: flex; align-items: center; transition: opacity 0.15s; }
 .github-link:hover { opacity: 0.9; color: var(--text); }
 .status { font-size: 10px; color: var(--text-muted); }
 .ln-warning { font-size: 9px; color: var(--accent-dim); text-align: center; padding: 3px 8px; line-height: 1.3; }
-.version { font-size: 10px; color: var(--text-muted); opacity: 0.4; }
+.update-link .version { font-size: 10px; color: inherit; opacity: 0.4; transition: opacity 0.15s; }
+.update-link:hover .version { opacity: 1; }

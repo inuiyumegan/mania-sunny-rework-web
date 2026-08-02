@@ -5,6 +5,12 @@
   var CONTAINER_ID = 'sunny-sr-badge';
   var lastBeatmapId = null;
   var _extInvalidated = false;
+  var _cachedOsuFile = null;
+  // 内存缓存：popup 通过 getSunnyData 直接读取当前页面的数据，
+  // 避免多标签页共享 storage 的相互覆盖
+  var _lastKey = null;
+  var _lastStorageData = null;
+  var _lastSummary = null;
 
   function getBeatmapId() {
     var url = window.location.href;
@@ -17,6 +23,18 @@
     return null;
   }
 
+  // 防重标识：包含 mode，使 #mania/x ↔ #osu/x 切换也能触发重算
+  function getBeatmapKey() {
+    var url = window.location.href;
+    var bMatch = url.match(/osu\.ppy\.sh\/b\/(\d+)/);
+    if (bMatch) return 'b:' + bMatch[1];
+    var beatmapsMatch = url.match(/osu\.ppy\.sh\/beatmaps\/(\d+)/);
+    if (beatmapsMatch) return 'b:' + beatmapsMatch[1];
+    var hashMatch = window.location.hash.match(/#(mania|osu|taiko|fruits)\/(\d+)/);
+    if (hashMatch) return hashMatch[1] + ':' + hashMatch[2];
+    return null;
+  }
+
   function applyHO(content) {
     var lines = content.split(/\r?\n/);
     var inH = false;
@@ -24,7 +42,7 @@
       if (lines[i].trim() === '[HitObjects]') { inH = true; continue; }
       if (inH && lines[i].trim() && !lines[i].startsWith('[')) {
         var p = lines[i].split(',');
-        if (p.length >= 4 && parseInt(p[3]) === 128) { p[3] = '1'; lines[i] = p.join(','); }
+        if (p.length >= 4 && (parseInt(p[3]) & 128) === 128) { p[3] = '1'; lines[i] = p.join(','); }
       }
     }
     return lines.join('\n');
@@ -218,13 +236,17 @@
   }
 
   async function calculateAndStore(beatmapId) {
-    if (beatmapId === lastBeatmapId) return;
+    var key = getBeatmapKey();
+    if (!key) return;
+    if (key === lastBeatmapId) return;
     if (_extInvalidated) return;
-    lastBeatmapId = beatmapId;
+    lastBeatmapId = key;
 
     try {
       ensureFont();
       var fileContent = await fetchOsuFile(beatmapId);
+      // 竞态保护：等待 fetch 期间可能已导航到其他谱面/模式，丢弃过期结果
+      if (lastBeatmapId !== key) return;
 
       var parser = new OsuParser(fileContent);
       parser.process();
@@ -235,8 +257,10 @@
       }
 
       var parsedData = parser.getParsedData();
-      var od = parser.od >= 0 ? parser.od : 5;
+      var od = parser.od >= 0 ? parser.od : 9;
       var hp = parser.hp >= 0 ? parser.hp : 5;
+      var stats = analyzeMap(parser);
+      var isLNMap = stats.lnCount > 0 && stats.lnRatio >= 0.15;
 
       // Base: compute NM, DT, HT (3 Sunny runs). DT/HT ratios derived for HO/IN below.
       var srResult = calculateFromParsed(parsedData, 'NM');
@@ -257,44 +281,45 @@
       var danielSR_DT = computeDanielSR(parser.columns, parser.noteStarts, parser.noteEnds, parser.noteTypes, parser.columnCount, 1.5);
       var danielSR_HT = computeDanielSR(parser.columns, parser.noteStarts, parser.noteEnds, parser.noteTypes, parser.columnCount, 0.75);
 
-      // HO: only NM run (saves 2 Sunny runs). DT/HT derived from base ratio.
-      var hoContent = applyHO(fileContent);
-      var hoParser = new OsuParser(hoContent);
-      hoParser.process();
-      var hoParsed = hoParser.getParsedData();
-      var hoStats = analyzeMap(hoParser);
-      var srHO, srHO_DT, srHO_HT, osuSR_HO, osuSR_HO_DT, osuSR_HO_HT, hoVariety, hoAccScalar;
-      try { var hoRes = calculateFromParsed(hoParsed, 'NM'); srHO = hoRes.sr; hoVariety = hoRes.variety; hoAccScalar = 0.5 * hoRes.spikiness + 0.5 * hoRes.switches; } catch(e) { console.warn('[SunnyRework] HO calc failed, fallback to NM:', e); srHO = sr; hoVariety = variety; hoAccScalar = accScalar; }
-      srHO_DT = srHO * dtRatio; srHO_HT = srHO * htRatio;
-      try { osuSR_HO = computeOsuSRFromParsed(hoParsed, 'NM'); osuSR_HO_DT = computeOsuSRFromParsed(hoParsed, 'DT'); osuSR_HO_HT = computeOsuSRFromParsed(hoParsed, 'HT'); } catch(e) { osuSR_HO = osuSR; osuSR_HO_DT = osuSR_DT; osuSR_HO_HT = osuSR_HT; }
+      // HO: only computed for LN maps (lnRatio >= 15% && lnCount > 0).
+      // For RC maps HO is skipped; HO values alias the NM values (converting
+      // a near-zero number of LNs has negligible effect).
+      var srHO, srHO_DT, srHO_HT, osuSR_HO, osuSR_HO_DT, osuSR_HO_HT, hoVariety, hoAccScalar, hoParsed, hoLnRatio;
+      if (isLNMap) {
+        var hoContent = applyHO(fileContent);
+        var hoParser = new OsuParser(hoContent);
+        hoParser.process();
+        hoParsed = hoParser.getParsedData();
+        hoLnRatio = analyzeMap(hoParser).lnRatio;
+        try { var hoRes = calculateFromParsed(hoParsed, 'NM'); srHO = hoRes.sr; hoVariety = hoRes.variety; hoAccScalar = 0.5 * hoRes.spikiness + 0.5 * hoRes.switches; } catch(e) { console.warn('[SunnyRework] HO calc failed, fallback to NM:', e); srHO = sr; hoVariety = variety; hoAccScalar = accScalar; }
+        srHO_DT = srHO * dtRatio; srHO_HT = srHO * htRatio;
+        try { osuSR_HO = computeOsuSRFromParsed(hoParsed, 'NM'); osuSR_HO_DT = computeOsuSRFromParsed(hoParsed, 'DT'); osuSR_HO_HT = computeOsuSRFromParsed(hoParsed, 'HT'); } catch(e) { osuSR_HO = osuSR; osuSR_HO_DT = osuSR_DT; osuSR_HO_HT = osuSR_HT; }
+      } else {
+        srHO = sr; srHO_DT = srDT; srHO_HT = srHT;
+        osuSR_HO = osuSR; osuSR_HO_DT = osuSR_DT; osuSR_HO_HT = osuSR_HT;
+        hoVariety = variety; hoAccScalar = accScalar;
+        hoLnRatio = 0;
+      }
 
-      // IN: only NM run (saves 2 Sunny runs). DT/HT derived.
-      var inContent = applyIN(fileContent);
-      var inParser = new OsuParser(inContent);
-      inParser.process();
-      var inParsed = inParser.getParsedData();
-      var inStats = analyzeMap(inParser);
-      var srIN, srIN_DT, srIN_HT, osuSR_IN, osuSR_IN_DT, osuSR_IN_HT, inVariety, inAccScalar;
-      try { var inRes = calculateFromParsed(inParsed, 'NM'); srIN = inRes.sr; inVariety = inRes.variety; inAccScalar = 0.5 * inRes.spikiness + 0.5 * inRes.switches; } catch(e) { console.warn('[SunnyRework] IN calc failed, fallback to NM:', e); srIN = sr; inVariety = variety; inAccScalar = accScalar; }
-      srIN_DT = srIN * dtRatio; srIN_HT = srIN * htRatio;
-      try { osuSR_IN = computeOsuSRFromParsed(inParsed, 'NM'); osuSR_IN_DT = computeOsuSRFromParsed(inParsed, 'DT'); osuSR_IN_HT = computeOsuSRFromParsed(inParsed, 'HT'); } catch(e) { osuSR_IN = osuSR; osuSR_IN_DT = osuSR_DT; osuSR_IN_HT = osuSR_HT; }
+      // IN: computed on demand when the user enables IN in the popup
+      // (see the 'recalculateIn' message handler below).
+      _cachedOsuFile = { id: beatmapId, content: fileContent };
 
       var title = getMapTitle();
       var diffName = getDifficultyName();
       var artist = getArtist();
       var mapper = getMapper();
-      var stats = analyzeMap(parser);
       var isSupKeys = stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7 || stats.columnCount === 10;
       var tier = { label: '' };
       if (isSupKeys) {
         var hasLN = stats.lnRatio >= 0.15;
-        var useDaniel = (stats.columnCount === 4 && danielSR >= 6.365);
+        var useDaniel = (stats.columnCount === 4 && danielSR >= DANIEL_ALPHA_BOUNDARY);
         var rcSR;
         if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) {
-          // LN map: RC uses Daniel (if >= 6.365) else srHO; LN uses Sunny
+          // LN map: RC uses Daniel (if >= 6.3645) else srHO; LN uses Sunny
           rcSR = useDaniel ? danielSR : (srHO != null ? srHO : sr);
         } else {
-          // RC map: RC uses Daniel (if >= 6.365) else Sunny; no LN
+          // RC map: RC uses Daniel (if >= 6.3645) else Sunny; no LN
           rcSR = useDaniel ? danielSR : sr;
         }
         var rcTier = useDaniel ? getDanielTier(rcSR).label : getRCTier(rcSR, stats.columnCount);
@@ -303,7 +328,7 @@
           if (hasLN && (stats.columnCount === 4 || stats.columnCount === 6 || stats.columnCount === 7)) {
             // LN tier always uses Sunny SR
             var lnTier = getLNTier(sr, stats.columnCount);
-            if (lnTier) tier.label = rcTier + ' || ' + lnTier;
+            if (lnTier) tier.label = rcTier + ' | ' + lnTier;
           }
         }
       }
@@ -319,45 +344,40 @@
       }
 
       showLoading();
-      chrome.storage.local.set({
-        sunnyMapData: {
-          beatmapId: beatmapId,
-          parsed: parsedData,
-          hoParsed: hoParsed,
-          inParsed: inParsed,
-          sr: sr, sr_DT: srDT, sr_HT: srHT,
-          srHO: srHO, srHO_DT: srHO_DT, srHO_HT: srHO_HT,
-          srIN: srIN, srIN_DT: srIN_DT, srIN_HT: srIN_HT,
-          osuSR: osuSR, osuSR_DT: osuSR_DT, osuSR_HT: osuSR_HT,
-          osuSR_HO: osuSR_HO, osuSR_HO_DT: osuSR_HO_DT, osuSR_HO_HT: osuSR_HO_HT,
-          osuSR_IN: osuSR_IN, osuSR_IN_DT: osuSR_IN_DT, osuSR_IN_HT: osuSR_IN_HT,
-          danielSR: danielSR, danielSR_DT: danielSR_DT, danielSR_HT: danielSR_HT,
-          od: od,
-          hp: hp,
-          variety: variety,
-          accScalar: accScalar,
-          spikiness: spikiness,
-          switches: switches,
-          varietyHO: hoVariety,
-          accScalarHO: hoAccScalar,
-          varietyIN: inVariety,
-          accScalarIN: inAccScalar,
-          maxCombo: stats.maxCombo,
-          totalNotes: stats.totalNotes,
-          riceCount: stats.riceCount,
-          lnCount: stats.lnCount,
-          lnRatio: stats.lnRatio,
-          lnRatioHO: hoStats.lnRatio,
-          lnRatioIN: inStats.lnRatio,
-          totalTime: stats.totalTime,
-          columnCount: stats.columnCount,
-          diffLabel: tier.label,
-          title: headerTitle,
-          subTitle: headerSub,
-          artist: artist,
-          mapper: mapper
-        }
-      }, function () {
+      var storageData = {
+        beatmapId: beatmapId,
+        parsed: parsedData,
+        hoParsed: hoParsed,
+        sr: sr, sr_DT: srDT, sr_HT: srHT,
+        srHO: srHO, srHO_DT: srHO_DT, srHO_HT: srHO_HT,
+        osuSR: osuSR, osuSR_DT: osuSR_DT, osuSR_HT: osuSR_HT,
+        osuSR_HO: osuSR_HO, osuSR_HO_DT: osuSR_HO_DT, osuSR_HO_HT: osuSR_HO_HT,
+        danielSR: danielSR, danielSR_DT: danielSR_DT, danielSR_HT: danielSR_HT,
+        od: od,
+        hp: hp,
+        variety: variety,
+        accScalar: accScalar,
+        spikiness: spikiness,
+        switches: switches,
+        varietyHO: hoVariety,
+        accScalarHO: hoAccScalar,
+        maxCombo: stats.maxCombo,
+        totalNotes: stats.totalNotes,
+        riceCount: stats.riceCount,
+        lnCount: stats.lnCount,
+        lnRatio: stats.lnRatio,
+        lnRatioHO: hoLnRatio,
+        totalTime: stats.totalTime,
+        columnCount: stats.columnCount,
+        diffLabel: tier.label,
+        title: headerTitle,
+        subTitle: headerSub,
+        artist: artist,
+        mapper: mapper
+      };
+      _lastKey = key;
+      syncLocalCache(storageData);
+      chrome.storage.local.set({ sunnyMapData: storageData }, function () {
         var pp = computeSunnyPP(sr, 100, [], stats.totalNotes, variety, accScalar);
         showBadge(sr, pp.pp, tier.label, stats.columnCount);
         chrome.runtime.sendMessage({ type: 'dataReady', beatmapId: beatmapId }).catch(function() {});
@@ -377,7 +397,8 @@
   function checkAndRun() {
     var beatmapId = getBeatmapId();
     if (!beatmapId) { hideBadge(); lastBeatmapId = null; return; }
-    if (beatmapId === lastBeatmapId) return;
+    var key = getBeatmapKey();
+    if (key === lastBeatmapId) return;
     hideBadge();
     calculateAndStore(beatmapId);
   }
@@ -403,8 +424,8 @@
   document.addEventListener('turbo:load', onUrlChanged);
 
   var observer = new MutationObserver(function () {
-    var id = getBeatmapId();
-    if (id && id !== lastBeatmapId) onUrlChanged();
+    var key = getBeatmapKey();
+    if (key && key !== lastBeatmapId) onUrlChanged();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true, attributes: false });
 
@@ -446,6 +467,15 @@
       sendResponse({ beatmapId: getBeatmapId() });
       return;
     }
+    if (request.type === 'getSunnyData') {
+      // popup 优先从这里取当前页面的内存数据，绕过共享 storage
+      if (_lastKey === getBeatmapKey() && _lastSummary) {
+        sendResponse({ ok: true, data: _lastSummary });
+      } else {
+        sendResponse({ ok: false });
+      }
+      return;
+    }
     if (request.type === 'triggerRecalc') {
       lastBeatmapId = null;
       checkAndRun();
@@ -453,12 +483,14 @@
       return;
     }
     if (request.type === 'recalculateOd') {
+      // 注意：badge 始终显示页面默认参数（NM 100% acc 的 Sunny SR/PP），
+      // 不随 popup 的 mod/acc/rate 设置变化；OD 重算后 badge 仅更新 SR/PP，
+      // diffLabel（段位标签）保持默认算法结果。
       try {
-        chrome.storage.local.get(['sunnyMapData'], function (result) {
-          var md = result.sunnyMapData;
-          if (!md || !md.parsed) { sendResponse({ error: 'no data' }); return; }
+        getLocalData(function (md) {
+          if (!md || !md.parsed) { sendResponse({ error: 'no data' }); return true; }
 
-          var od = parseFloat(request.od); if (isNaN(od)) od = md.od >= 0 ? md.od : 8;
+          var od = parseFloat(request.od); if (isNaN(od)) od = md.od >= 0 ? md.od : 9;
           var dtRatio = md.sr > 0 ? (md.sr_DT || 0) / md.sr : 1.5;
           var htRatio = md.sr > 0 ? (md.sr_HT || 0) / md.sr : 0.75;
           var base = recalcOd(md.parsed, od);
@@ -468,14 +500,21 @@
           var updates = {
             sr: base.sr, sr_DT: base.srDT, sr_HT: base.srHT,
             srHO: ho.sr, srHO_DT: ho.srDT, srHO_HT: ho.srHT,
-            srIN: inv.sr, srIN_DT: inv.srDT, srIN_HT: inv.srHT,
-            variety: base.variety, varietyHO: ho.variety, varietyIN: inv.variety,
-            accScalar: base.accScalar, accScalarHO: ho.accScalar, accScalarIN: inv.accScalar,
+            variety: base.variety, varietyHO: ho.variety,
+            accScalar: base.accScalar, accScalarHO: ho.accScalar,
             spikiness: base.spikiness, switches: base.switches,
             od: od
           };
+          // IN 数据未计算（srIN 不存在）时不写 IN 字段，避免污染“未计算”状态
+          if (md.inParsed) {
+            updates.srIN = inv.sr; updates.srIN_DT = inv.srDT; updates.srIN_HT = inv.srHT;
+            updates.varietyIN = inv.variety;
+            updates.accScalarIN = inv.accScalar;
+          }
 
-          chrome.storage.local.set({ sunnyMapData: Object.assign({}, md, updates) }, function () {
+          var merged = Object.assign({}, md, updates);
+          if (_lastKey === getBeatmapKey()) syncLocalCache(merged);
+          chrome.storage.local.set({ sunnyMapData: merged }, function () {
             var pp = computeSunnyPP(base.sr, 100, [], md.totalNotes, base.variety, base.accScalar);
             showBadge(base.sr, pp.pp, md.diffLabel, md.columnCount);
             sendResponse({ ok: true });
@@ -484,7 +523,96 @@
         return true;
       } catch (e) {
         sendResponse({ error: e.message });
+        return true;
       }
     }
+    if (request.type === 'recalculateIn') {
+      handleRecalculateIn(sendResponse);
+      return true;
+    }
   });
+
+  // 优先使用当前页面的内存数据（隔离多标签页 storage 污染），否则回退 storage
+  function getLocalData(cb) {
+    if (_lastStorageData && _lastKey === getBeatmapKey()) {
+      cb(_lastStorageData);
+      return;
+    }
+    chrome.storage.local.get(['sunnyMapData'], function (r) {
+      cb(r.sunnyMapData || null);
+    });
+  }
+
+  // 同步内存缓存（popup 渲染用的摘要剔除 parsed/hoParsed/inParsed 大数组）
+  function syncLocalCache(data) {
+    _lastStorageData = data;
+    _lastSummary = {};
+    for (var sf in data) {
+      if (sf !== 'parsed' && sf !== 'hoParsed' && sf !== 'inParsed') _lastSummary[sf] = data[sf];
+    }
+  }
+
+  // 按需计算 IN（Invert）模式：用户开启 IN 时由 popup 触发，
+  // 使用缓存的原始 .osu 文本做变换，1 次 Sunny NM 计算 + 3 次官方 SR，
+  // DT/HT 值通过 NM 的倍率推导；结果写入 storage，popup 通过 storage.onChanged 刷新。
+  async function handleRecalculateIn(sendResponse) {
+    try {
+      var md = await new Promise(function (resolve) {
+        getLocalData(function (m) { resolve(m || null); });
+      });
+      if (!md || !md.beatmapId) { sendResponse({ error: 'no data' }); return; }
+      if (md.srIN != null) { sendResponse({ ok: true, cached: true }); return; }
+
+      var id = md.beatmapId;
+      var content = (_cachedOsuFile && _cachedOsuFile.id === id) ? _cachedOsuFile.content : null;
+      if (content == null) {
+        content = await fetchOsuFile(id);
+        _cachedOsuFile = { id: id, content: content };
+      }
+
+      var inContent = applyIN(content);
+      var inParser = new OsuParser(inContent);
+      inParser.process();
+      var inParsed = inParser.getParsedData();
+      var inStats = analyzeMap(inParser);
+
+      var res;
+      try {
+        res = calculateFromParsed(inParsed, 'NM');
+      } catch (e) {
+        console.warn('[SunnyRework] IN calc failed, fallback to NM:', e);
+        res = { sr: md.sr, variety: md.variety, spikiness: md.spikiness, switches: md.switches };
+      }
+      var dtRatio = md.sr > 0 ? (md.sr_DT || 0) / md.sr : 1.5;
+      var htRatio = md.sr > 0 ? (md.sr_HT || 0) / md.sr : 0.75;
+
+      var updates = {
+        inParsed: inParsed,
+        srIN: res.sr,
+        srIN_DT: res.sr * dtRatio,
+        srIN_HT: res.sr * htRatio,
+        varietyIN: res.variety,
+        accScalarIN: 0.5 * res.spikiness + 0.5 * res.switches,
+        lnRatioIN: inStats.lnRatio
+      };
+      try {
+        updates.osuSR_IN = computeOsuSRFromParsed(inParsed, 'NM');
+        updates.osuSR_IN_DT = computeOsuSRFromParsed(inParsed, 'DT');
+        updates.osuSR_IN_HT = computeOsuSRFromParsed(inParsed, 'HT');
+      } catch (e) {
+        updates.osuSR_IN = md.osuSR || 0;
+        updates.osuSR_IN_DT = md.osuSR_DT || 0;
+        updates.osuSR_IN_HT = md.osuSR_HT || 0;
+      }
+
+      var merged = Object.assign({}, md, updates);
+      if (_lastKey === getBeatmapKey()) syncLocalCache(merged);
+      chrome.storage.local.set({ sunnyMapData: merged }, function () {
+        sendResponse({ ok: true });
+      });
+    } catch (err) {
+      console.error('[SunnyRework] recalculateIn error:', err);
+      sendResponse({ error: err.message || String(err) });
+    }
+  }
 })();

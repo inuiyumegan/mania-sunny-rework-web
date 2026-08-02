@@ -20,7 +20,7 @@ function computeOsuSRFromParsed(p, mod) {
   for (var i = 0; i < p[1].length; i++) {
     var column = p[1][i];
     var startTime = p[2][i] / rate;
-    var isHold = p[4][i] === 128;
+    var isHold = (p[4][i] & 128) === 128;
     var endTime = isHold ? p[3][i] / rate : startTime;
     objects.push({ column: column, startTime: startTime, endTime: endTime, isHold: isHold });
   }

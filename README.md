@@ -17,7 +17,7 @@
 - **6K Rating 模式** — 显示 6K 定数与基于 Acc 的 Rating
 - **7K Wild 模式** — 7K 支持 Auto / Wild 两种段位算法切换
 - **RC / LN 段位** — 根据 LN 占比自动显示 RC 段位或 RC+LN 混合段位
-- **PP 估算** — NM/DT/HT 三列实时 PP 计算，支持自定义倍速 (0.5x ~ 2.0x)
+- **PP 估算** — NM/DT/HT 三列实时 PP 计算，支持自定义倍速 (0.01x ~ 10x)
 - **MOD 支持** — SV1/SV2/NF/EZ/HO/IN 等 mod 组合
 - **自定义 OD** — 独立调节 OD 值，自动重新计算星数
 - **判定输入** — 手动输入判定数以计算实际 Acc 对应的 PP
@@ -46,11 +46,17 @@
 | 功能 | 说明 |
 |------|------|
 | **DT / NM / HT** | 三列分别显示 1.5x / 1.0x / 0.75x 的星数和 PP |
-| **倍速滑块** | 支持 0.5x ~ 2.0x 自定义倍速，预设快捷键快速切换 |
+| **倍速滑块** | 支持 0.01x ~ 10x 自定义倍速，预设按钮快速切换 |
 | **判定输入** | 输入 320/300/200/100/50/miss 数量计算实时 PP |
 | **算法切换** | 4K: Auto / Sunny；6K: Rating / Sunny；7K: Auto / Wild |
 | **MOD 按钮** | 切换 SV1/SV2/NF/EZ/HO/IN，自动重算 |
 | **自定义 OD** | 修改 OD 值后自动请求后端重算星数 |
+
+---
+
+## 自动更新检测
+
+打开 popup 时会自动检测 GitHub 上是否有新版本发布。若有新版本，右下角的亡者天冠图标与版本号会显示更新提示（如 `v0.8.2(1.9.0 new version!!)`），点击图标或版本号即可跳转到 [Releases 页面](https://github.com/inuiyumegan/mania-sunny-rework-web/releases) 下载新版本。
 
 ---
 
@@ -91,7 +97,7 @@ Popup 读取并渲染 NM/DT/HT 三列 + PP + 段位/定数
 - **DT**：1.5x 倍速，算法内将音符时间戳乘以 `2/3`
 - **HT**：0.75x 倍速，算法内将音符时间戳乘以 `4/3`
 
-HO / IN 模式会先在原始 `.osu` 文本上做变换，再跑 NM 算法，DT/HT 值通过 NM 的倍率推导：
+HO / IN 模式会先在原始 `.osu` 文本上做变换，再跑 NM 算法，DT/HT 值通过 NM 的倍率推导。HO 仅对 LN 图（LN 占比 ≥ 15%）计算，RC 图直接用 NM 值；IN 在开启时按需计算：
 
 - **HO（Hold Off）**：把所有 LN 转为普通音符，模拟纯米谱面。
 - **IN（Invert）**：把每个音符到下一音符的间隙转成 LN，与 osu! 官方 Invert mod 算法一致（时长取 `max(gap/2, gap - beatLength/4)`）。
@@ -104,10 +110,10 @@ HO / IN 模式会先在原始 `.osu` 文本上做变换，再跑 NM 算法，DT/
 
 <img src="graphs/2_4k_feature.png" width="450" alt="4K 功能">
 
-- **Auto**：当 Daniel 4K 难度 ≥ 6.365 时使用 Daniel 算法（该算法将面视为米处理），否则使用 Sunny Rework。
-- **Sunny**：强制使用 Sunny Rework 的 RC4K_Reform 段位表，支持 RC Intro 1 到 Theta Dan，LN 1 到 20 Dan（DDMythical's Intro 1-Epsilon Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta-Kappa Dan & 3437-114514's Lambda-Rho Dan (for joke) & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan &Lnlism's 17 18 Dan）。
+- **Auto**：当 Daniel 4K 难度 ≥ 6.3645 时使用 Daniel 算法（该算法将面视为米处理），否则使用 Sunny Rework。
+- **Sunny**：强制使用 Sunny Rework 的 RC4K_Reform 段位表，支持 RC Intro 1 到 Rho Dan，LN 1 到 20 Dan（DDMythical's Intro 1-Epsilon Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta-Kappa Dan (iota and kappa for joke) & 3437-114514's Lambda-Rho Dan (for joke) & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan & Lnlism's 17 18 Dan）。
 
-*LN 17 和 Theta 以上的难度意义不大，仅供娱乐*
+*LN 17 和 Theta 以上（含 joke 段位）的难度意义不大，仅供娱乐*
 
 若 LN 占比 ≥ 15%，会同时显示 RC 段位和 LN 段位，格式如 `rf8/8⁻ | LN 11⁻`。
 
@@ -145,7 +151,7 @@ Badge 右下角常驻面板对 6K 谱面默认显示定数。
 ### 判定与 Acc
 
 - 输入框支持 320 / 300 / 200 / 100 / 50 / miss。
-- 显示的 Acc 遵循 SV1（320 彩判权重）或 SV2（305 彩判权重）设置。
+- 显示的 Acc 遵循 SV1（300 权重，320 仅用于 score 计算，本程序不计算 score）或 SV2（305 权重）设置。
 - 6K Rating 模式内部计算 Rating 时固定使用 **310 权重 Acc** ，不影响显示 Acc。
 
 ### 自定义 OD

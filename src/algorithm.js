@@ -19,20 +19,21 @@ function preprocessParsedData(p, mod) {
 
   for (let i = 0; i < p[1].length; i++) {
     let h = p[2][i];
-    let t = p[4][i] === 128 ? p[3][i] : -1;
+    let t = (p[4][i] & 128) === 128 ? p[3][i] : -1;
 
     if (mod === 'DT') {
-      h = Math.round(h * 2 / 3);
-      t = t >= 0 ? Math.round(t * 2 / 3) : t;
+      h = Math.floor(h * 2 / 3);
+      t = t >= 0 ? Math.floor(t * 2 / 3) : t;
     } else if (mod === 'HT') {
-      h = Math.round(h * 4 / 3);
-      t = t >= 0 ? Math.round(t * 4 / 3) : t;
+      h = Math.floor(h * 4 / 3);
+      t = t >= 0 ? Math.floor(t * 4 / 3) : t;
     }
 
     noteSeq.push([p[1][i], h, t]);
   }
 
-  let x = 0.3 * Math.pow((64.5 - Math.ceil(p[5] * 3)) / 500, 0.5);
+  let odVal = p[5] >= 0 ? p[5] : 9;
+  let x = 0.3 * Math.pow((64.5 - Math.ceil(odVal * 3)) / 500, 0.5);
   x = Math.min(x, 0.6 * (x - 0.09) + 0.09);
 
   noteSeq.sort((a, b) => a[1] - b[1] || a[0] - b[0]);

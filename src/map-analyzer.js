@@ -171,6 +171,9 @@ var _DAN_BOUNDARIES = (function () {
   return boundaries;
 })();
 
+// Daniel Alpha low 下边界（diff < 此值时为 "<Alpha low"），Auto 模式切换 Daniel 的阈值
+var DANIEL_ALPHA_BOUNDARY = _DAN_BOUNDARIES[0][0];
+
 function getDanielTier(diff) {
   if (diff < _DAN_BOUNDARIES[0][0]) return { label: "<" + DAN_ORDER[0] + " low", numeric: "N/A" };
   if (diff >= _DAN_BOUNDARIES[_DAN_BOUNDARIES.length - 1][1]) return { label: ">" + DAN_ORDER[DAN_ORDER.length - 1] + " high", numeric: "N/A" };
@@ -190,15 +193,6 @@ function getDanielTier(diff) {
     }
   }
   return { label: "? ? ? ? ?", numeric: "N/A" };
-}
-
-function getDifficultyTier(sr, lnRatio, keys) {
-  var rcTier = getRCTier(sr, keys);
-  if (!rcTier) return { label: "" };
-  if (lnRatio < 0.15) return { label: rcTier };
-  var lnTier = getLNTier(sr, keys);
-  if (!lnTier) return { label: rcTier };
-  return { label: rcTier + " || " + lnTier };
 }
 
 var RC6K = [
@@ -349,7 +343,7 @@ var LN7K = [
 
 function analyzeMap(parser) {
   var columnCount = parser.columnCount;
-  var od = parser.od >= 0 ? parser.od : 8;
+  var od = parser.od >= 0 ? parser.od : 9;
   var totalNotes = parser.columns.length;
   var totalTime = 0;
   if (totalNotes > 0) {
@@ -359,7 +353,7 @@ function analyzeMap(parser) {
   var lnCount = 0;
   var lnTotalHold = 0;
   for (var i = 0; i < totalNotes; i++) {
-    if (parser.noteTypes[i] === 128) {
+    if ((parser.noteTypes[i] & 128) === 128) {
       lnCount++;
       var holdLen = parser.noteEnds[i] - parser.noteStarts[i];
       if (holdLen > 0) lnTotalHold += holdLen;
@@ -372,7 +366,7 @@ function analyzeMap(parser) {
 
   var maxCombo = totalNotes;
   for (var j = 0; j < totalNotes; j++) {
-    if (parser.noteTypes[j] === 128) {
+    if ((parser.noteTypes[j] & 128) === 128) {
       var h = parser.noteEnds[j] - parser.noteStarts[j];
       if (h > 0) maxCombo += Math.floor(h / 100);
     }

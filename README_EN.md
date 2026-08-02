@@ -1,4 +1,4 @@
-# mania-sunny-rework-web
+ # mania-sunny-rework-web
 
 A Chrome extension (compatible with Edge and other Chromium browsers) for osu!mania beatmap difficulty and PP estimation based on [Sunny Rework](https://github.com/sunnyxxy/Star-Rating-Rebirth). View Sunny Rework star ratings, RC/LN tiers, real-time PP calculations, and [6K difficulty constant / Rating](https://github.com/IceRain5491/ManiaMapWorkshop) estimates directly on osu! beatmap pages.
 
@@ -17,7 +17,7 @@ Popup panel in the top-right corner displays detailed information; persistent ba
 - **6K Rating Mode** — Displays 6K difficulty constant and Acc-based Rating
 - **7K Wild Mode** — 7K supports Auto / Wild algorithm toggle
 - **RC / LN Tiers** — Auto-displays RC tier or RC+LN mixed tier based on LN ratio
-- **PP Estimation** — Real-time PP for NM/DT/HT columns, supports custom speed (0.5x ~ 2.0x)
+- **PP Estimation** — Real-time PP for NM/DT/HT columns, supports custom speed (0.01x ~ 10x)
 - **MOD Support** — Mod combinations: SV1/SV2/NF/EZ/HO/IN and more
 - **Custom OD** — Independently adjust OD value, auto-recalculates star rating
 - **Judgment Input** — Manually enter judgment counts to compute actual accuracy PP
@@ -48,11 +48,17 @@ Popup panel in the top-right corner displays detailed information; persistent ba
 | Feature | Description |
 |---------|-------------|
 | **DT / NM / HT** | Three columns showing 1.5x / 1.0x / 0.75x star ratings and PP |
-| **Speed Slider** | Custom speed from 0.5x ~ 2.0x with preset shortcut buttons |
+| **Speed Slider** | Custom speed from 0.01x ~ 10x with preset shortcut buttons |
 | **Judgment Input** | Enter 320/300/200/100/50/miss counts for real-time PP |
 | **Algorithm Switch** | 4K: Auto / Sunny; 6K: Rating / Sunny; 7K: Auto / Wild |
 | **MOD Buttons** | Toggle SV1/SV2/NF/EZ/HO/IN, auto-recalculates |
 | **Custom OD** | Modify OD value, triggers automatic recalculation |
+
+---
+
+## Automatic Update Check
+
+The popup automatically checks GitHub for new releases when opened. If an update is available, the Death Crown icon and the version text in the bottom-right corner show an update notice (e.g. `v0.8.2(1.9.0 new version!!)`); clicking the icon or version text takes you to the [Releases page](https://github.com/inuiyumegan/mania-sunny-rework-web/releases) to download the new version.
 
 ---
 
@@ -107,7 +113,7 @@ For HO / IN modes, the raw `.osu` text is transformed before running the NM algo
 <img src="graphs/2_4k_feature.png" width="450" alt="4K Features">
 
 - **Auto**: Uses Daniel algorithm when 4K Daniel difficulty ≥ 6.365, otherwise Sunny Rework.
-- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports RC Intro 1 to Theta Dan, LN 1 to 20 Dan (DDMythical's Intro 1-Epsilon Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta-Kappa Dan & 3437-114514's Lambda-Rho Dan (for joke) & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan & Lnlism's 17 18 Dan).
+- **Sunny**: Forces Sunny Rework RC4K_Reform tier table, supports RC Intro 1 to Rho Dan, LN 1 to 20 Dan (DDMythical's Intro 1-Epsilon Dan & Emik's Zeta Dan & Thaumiel's Eta Dan & CloverWisp's Theta-Kappa Dan (iota and kappa for joke) & 3437-114514's Lambda-Rho Dan (for joke) & underjoy's LN 1-15 Dan & hypersovae's LN 16 19 20 Dan & Lnlism's 17 18 Dan).
 
 *Difficulties above LN 17 and Theta are of limited significance, for entertainment purposes only.*
 

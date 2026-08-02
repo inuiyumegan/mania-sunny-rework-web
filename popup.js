@@ -8,6 +8,7 @@
   var active7KMode = 'auto';
   var active6KMode = 'rating';
   var activeMods = {};
+  var _inRequested = false;
 
   var JOKE_GREEK = {
     Iota:    { symbol: 'ι', n: 9 },
@@ -23,10 +24,16 @@
 
   function get4KJokeLabel(label) {
     if (!label) return null;
-    var m = label.match(/^(Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho)\s/);
+    var prefix = '';
+    var rest = label;
+    if (rest.charAt(0) === '<' || rest.charAt(0) === '>') {
+      prefix = rest.charAt(0);
+      rest = rest.slice(1).trim();
+    }
+    var m = rest.match(/^(Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho)\s+(.+)$/);
     if (!m) return null;
     var j = JOKE_GREEK[m[1]];
-    return j.symbol + '(' + j.n + 'th *for joke)';
+    return prefix + tierAbbr(j.symbol + ' ' + m[2]) + '(' + j.n + 'th *for joke)';
   }
 
   function rcLookup(sr, keys, mode) {
@@ -83,8 +90,6 @@
     return diff * mult;
   }
 
-  function formatTime(sec) { if (!sec || sec <= 0) return '--'; var m = Math.floor(sec / 60); var s = Math.floor(sec % 60); return m + ':' + (s < 10 ? '0' : '') + s; }
-
   // Difficulty constant (定数) from Sunny SR for mania-rating-gui style
   function calcDiffConst(sr) { return sr * 200.0 / 81.0 + 7.0 / 6.0; }
 
@@ -131,16 +136,18 @@
     var acc;
     if (totalJ > 0) {
       if (activeMods.SV1) {
+        // SV1：300 权重（320 仅用于 score 计算，本程序不计算 score）
         acc = ((p320 + p300) * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (totalJ * 300) * 100;
       } else {
-        acc = (p320 * 320 + p300 * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (totalJ * 320) * 100;
+        // SV2：305 权重
+        acc = (p320 * 305 + p300 * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (totalJ * 305) * 100;
       }
     } else {
       acc = 100;
     }
 
     var rate = parseFloat($('pp-rate').value) || 1.0;
-    rate = Math.min(2.0, Math.max(0.5, rate));
+    rate = Math.min(10, Math.max(0.01, rate));
     return { acc: acc, rate: rate };
   }
 
@@ -172,20 +179,6 @@
     badgeEl.style.color = delta >= 0 ? '#6bcb77' : '#ff6b6b';
   }
 
-  function getAlgoSR(srSuffix) {
-    if (!mapData) return 0;
-    var ho = activeMods.HO, inMod = activeMods.IN;
-    var sunnyKey = ho ? 'srHO' + srSuffix : inMod ? 'srIN' + srSuffix : 'sr' + srSuffix;
-    var danielKey = 'danielSR' + srSuffix;
-    var sunnyVal = mapData[sunnyKey] || mapData['sr' + srSuffix] || 0;
-    var danielVal = mapData[danielKey] || 0;
-    if (mapData.columnCount === 4) {
-      if (activeAlgo === 'sunny') return sunnyVal;
-      if (danielVal > 0 && mapData.danielSR >= 6.36) return danielVal;
-    }
-    return sunnyVal;
-  }
-
   function getEffectiveOD() {
     var raw = $('stat-od').value;
     var v = parseFloat(raw);
@@ -196,6 +189,11 @@
   function updateAll() {
     if (!mapData) return;
     try {
+    if (activeMods.IN && mapData.srIN == null) {
+      // IN 数据尚未计算：触发按需计算并保持占位显示
+      requestInData();
+      return;
+    }
     var inp = getInputs();
     var n = mapData.totalNotes || 0;
     var isCustom = Math.abs(inp.rate - 1.0) >= 0.01;
@@ -243,10 +241,10 @@
         }
       } else if (keySup) {
         var danielR = mapData.columnCount === 4 ? estimateSR(mapData.danielSR, mapData.danielSR_DT, mapData.danielSR_HT, r) : 0;
-        var useDanielForRC = (mapData.columnCount === 4 && activeAlgo !== 'sunny' && danielR >= 6.365);
+        var useDanielForRC = (mapData.columnCount === 4 && activeAlgo !== 'sunny' && danielR >= DANIEL_ALPHA_BOUNDARY);
         var tierNM, tierDT, tierHT;
         if (hasLN && (mapData.columnCount === 4 || mapData.columnCount === 6 || mapData.columnCount === 7)) {
-          // LN map: RC uses Daniel (if rate-adjusted >= 6.365) else srHO; LN uses Sunny
+          // LN map: RC uses Daniel (if rate-adjusted >= 6.3645) else srHO; LN uses Sunny
           if (useDanielForRC) {
             tierNM = mapData.danielSR; tierDT = mapData.danielSR_DT; tierHT = mapData.danielSR_HT;
           } else {
@@ -255,7 +253,7 @@
             tierHT = mapData.srHO_HT != null ? mapData.srHO_HT : mapData.sr_HT;
           }
         } else {
-          // RC map: RC uses Daniel (if rate-adjusted >= 6.365) else Sunny; no LN
+          // RC map: RC uses Daniel (if rate-adjusted >= 6.3645) else Sunny; no LN
           tierNM = useDanielForRC ? mapData.danielSR : sunnyNM;
           tierDT = useDanielForRC ? mapData.danielSR_DT : sunnyDT;
           tierHT = useDanielForRC ? mapData.danielSR_HT : sunnyHT;
@@ -281,7 +279,7 @@
     $('stat-notes').textContent = mapData.totalNotes || '--';
     var effLn = inMod ? (mapData.lnRatioIN || 1) : (ho ? (mapData.lnRatioHO || 0) : (mapData.lnRatio || 0));
     $('stat-lnpct').textContent = ((effLn || 0) * 100).toFixed(1) + '%';
-    var odVal = mapData.od >= 0 ? mapData.od : 8;
+    var odVal = mapData.od >= 0 ? mapData.od : 9;
     var hpVal = mapData.hp >= 0 ? mapData.hp : 8;
     var activeGameMods = getActiveMods();
     if (activeGameMods.indexOf('EZ') >= 0) { odVal = (odVal * 0.5).toFixed(1); hpVal = (hpVal * 0.5).toFixed(1); }
@@ -310,9 +308,11 @@
     if (total === 0) return;
     var acc;
     if (activeMods.SV1) {
+      // SV1：300 权重（320 仅用于 score 计算，本程序不计算 score）
       acc = ((p320 + p300) * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (total * 300) * 100;
     } else {
-      acc = (p320 * 320 + p300 * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (total * 320) * 100;
+      // SV2：305 权重
+      acc = (p320 * 305 + p300 * 300 + p200 * 200 + p100 * 100 + p50 * 50) / (total * 305) * 100;
     }
     $('pp-acc-display').textContent = acc.toFixed(2) + '%';
   }
@@ -372,33 +372,57 @@
     }
     chrome.storage.local.get(['sunnyAlgo'], function (r) {
       if (r.sunnyAlgo) { activeAlgo = r.sunnyAlgo === 'daniel' ? 'auto' : r.sunnyAlgo; }
+      if (mapData) setupAlgoBar(mapData.columnCount);
     });
     chrome.storage.local.get(['sunny7KMode'], function (r) {
       if (r.sunny7KMode) { active7KMode = r.sunny7KMode; }
+      if (mapData) setupAlgoBar(mapData.columnCount);
     });
     chrome.storage.local.get(['sunny6KMode'], function (r) {
       if (r.sunny6KMode) {
         // Migrate legacy CT Dan mode value to Sunny
         active6KMode = r.sunny6KMode === 'ctdan' ? 'sunny' : r.sunny6KMode;
       }
+      if (mapData) setupAlgoBar(mapData.columnCount);
     });
   }
 
   function loadMapData(retryCount) {
     retryCount = retryCount || 0;
+    // 优先从当前页面的 content script 内存取数据：隔离多标签页共享 storage
+    // 的相互覆盖，且不再触发 triggerRecalc 重算（避免 badge 闪烁）
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (!tabs[0]) {
+        loadMapDataFromStorage(retryCount);
+        return;
+      }
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'getSunnyData' }, function (resp) {
+        if (chrome.runtime.lastError) {
+          // content script 不可达：扩展已重载或页面过期，
+          // 当前显示的数据可能不是本页谱面
+          chrome.tabs.get(tabs[0].id, function (tab) {
+            if (tab && tab.url && /osu\.ppy\.sh\/(beatmapsets|b\/|beatmaps)\//.test(tab.url)) {
+              $('status').textContent = 'Page expired, refresh to update';
+            }
+          });
+          loadMapDataFromStorage(retryCount);
+          return;
+        }
+        if (resp && resp.ok && resp.data) {
+          applyMapData(resp.data);
+          return;
+        }
+        // content script 数据未就绪（页面刚加载/导航瞬间）：回退 storage，
+        // 计算完成后 storage.onChanged 会自动刷新本 popup
+        loadMapDataFromStorage(retryCount);
+      });
+    });
+  }
+
+  function loadMapDataFromStorage(retryCount) {
     chrome.storage.local.get(['sunnyMapData'], function (result) {
       if (result.sunnyMapData && result.sunnyMapData.beatmapId) {
         applyMapData(result.sunnyMapData);
-        // Async verify against current tab's beatmap
-         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-          if (!tabs[0]) return;
-          chrome.tabs.sendMessage(tabs[0].id, { type: 'getCurrentBeatmapId' }, function (resp) {
-            if (chrome.runtime.lastError) return;
-            if (resp && resp.beatmapId && resp.beatmapId !== result.sunnyMapData.beatmapId) {
-              chrome.tabs.sendMessage(tabs[0].id, { type: 'triggerRecalc' });
-            }
-          });
-        });
       } else if (retryCount < 5) {
         setTimeout(function () { loadMapData(retryCount + 1); }, 500);
       } else {
@@ -412,17 +436,26 @@
   }
 
   function applyMapData(md) {
+    var isNewMap = (mapData === null || mapData.beatmapId !== md.beatmapId);
     mapData = md;
     lastBeatmapId = md.beatmapId;
+    _inRequested = false;
     $('map-name').textContent = md.title || ('Beatmap #' + md.beatmapId);
     $('map-tier-line').textContent = md.subTitle || '';
     $('map-artist').textContent = md.artist ? 'by ' + md.artist : '';
     $('map-mapper').textContent = md.mapper ? 'mapped by ' + md.mapper : '';
-    if (activeMods._judgmentsDirty !== true) {
+    if (isNewMap || activeMods._judgmentsDirty !== true) {
+      // 切换谱面时清空旧判定，避免混用上一张图的输入
       $('j-320').value = md.totalNotes || 0;
+      $('j-300').value = 0;
+      $('j-200').value = 0;
+      $('j-100').value = 0;
+      $('j-50').value = 0;
+      $('j-0').value = 0;
+      activeMods._judgmentsDirty = false;
     }
     if (!activeMods._odDirty) {
-      $('stat-od').value = md.od >= 0 ? md.od : 5;
+      $('stat-od').value = md.od >= 0 ? md.od : 9;
     }
     $('status').textContent = 'Ready';
     $('algo-bar').style.display = (md.columnCount === 4 || md.columnCount === 6 || md.columnCount === 7) ? 'flex' : 'none';
@@ -430,7 +463,7 @@
     updateAll();
   }
   function initInputs() {
-    var els = ['pp-acc','pp-combo','pp-rate','j-320','j-300','j-200','j-100','j-50','j-0','stat-od'];
+    var els = ['pp-rate','j-320','j-300','j-200','j-100','j-50','j-0','stat-od'];
     for (var i = 0; i < els.length; i++) {
       var el = $(els[i]); if (el) el.addEventListener('input', function(e) {
         if (e.target.id.match(/^j-/)) {
@@ -458,7 +491,7 @@
     $('rate-plus').addEventListener('click', function () {
       var rateEl = $('pp-rate');
       var rate = parseFloat(rateEl.value) || 1.0;
-      rate = Math.min(2.0, rate + 0.01);
+      rate = Math.min(10, rate + 0.01);
       rateEl.value = rate.toFixed(2);
       highlightPreset(rate);
       debounceUpdate();
@@ -466,7 +499,7 @@
     $('rate-minus').addEventListener('click', function () {
       var rateEl = $('pp-rate');
       var rate = parseFloat(rateEl.value) || 1.0;
-      rate = Math.max(0.5, rate - 0.01);
+      rate = Math.max(0.01, rate - 0.01);
       rateEl.value = rate.toFixed(2);
       highlightPreset(rate);
       debounceUpdate();
@@ -512,6 +545,25 @@
     });
   }
 
+  // IN（Invert）按需计算：向 content script 请求，结果写入 storage 后
+  // 通过 storage.onChanged 自动刷新本 popup。
+  function requestInData() {
+    if (!mapData || !mapData.beatmapId) return;
+    if (mapData.srIN != null) return;
+    if (_inRequested) return;
+    _inRequested = true;
+    $('status').textContent = 'Calculating IN...';
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (!tabs[0]) { _inRequested = false; $('status').textContent = 'IN calc failed'; return; }
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'recalculateIn' }, function (resp) {
+        if (chrome.runtime.lastError) {
+          _inRequested = false;
+          $('status').textContent = 'IN calc failed';
+        }
+      });
+    });
+  }
+
   function clampJudgments() {
     if (!mapData || !mapData.totalNotes) return;
     var tn = mapData.totalNotes;
@@ -535,11 +587,73 @@
     }
   }
 
+  // ---- GitHub release 更新检查 ----
+  var UPDATE_CHECK_TTL = 24 * 60 * 60 * 1000; // 24h
+  var UPDATE_REPO = 'inuiyumegan/mania-sunny-rework-web';
+
+  function compareVersions(a, b) {
+    var pa = String(a || '').replace(/^v/i, '').split('.');
+    var pb = String(b || '').replace(/^v/i, '').split('.');
+    var len = Math.max(pa.length, pb.length);
+    for (var i = 0; i < len; i++) {
+      var x = parseInt(pa[i], 10) || 0;
+      var y = parseInt(pb[i], 10) || 0;
+      if (x > y) return 1;
+      if (x < y) return -1;
+    }
+    return 0;
+  }
+
+  function setUpdateIcon(hasUpdate, latestTag) {
+    var svg = $('update-icon-ok');
+    if (!svg) return;
+    var link = svg.closest ? svg.closest('.update-link') : null;
+    var verEl = $('footer-version');
+    var ver = chrome.runtime.getManifest().version;
+    var title;
+    if (hasUpdate) {
+      svg.classList.add('has-update');
+      title = 'New version ' + latestTag + ' available';
+      if (verEl) verEl.textContent = 'v' + ver + '(' + String(latestTag || '').replace(/^v/i, '') + ' new version!!)';
+    } else {
+      svg.classList.remove('has-update');
+      title = 'Up to date';
+      if (verEl) verEl.textContent = 'v' + ver;
+    }
+    if (link) link.title = title;
+    if (verEl) verEl.title = title;
+  }
+
+  function checkUpdate() {
+    chrome.storage.local.get(['sunnyUpdateCheck'], function (r) {
+      var now = Date.now();
+      if (r.sunnyUpdateCheck && (now - r.sunnyUpdateCheck.checkedAt) < UPDATE_CHECK_TTL) {
+        setUpdateIcon(r.sunnyUpdateCheck.hasUpdate, r.sunnyUpdateCheck.latestTag);
+        return;
+      }
+      fetch('https://api.github.com/repos/' + UPDATE_REPO + '/releases/latest')
+        .then(function (resp) { if (!resp.ok) throw new Error('HTTP ' + resp.status); return resp.json(); })
+        .then(function (data) {
+          var latest = data && data.tag_name ? data.tag_name : '';
+          var hasUpdate = !!latest && compareVersions(latest, chrome.runtime.getManifest().version) > 0;
+          chrome.storage.local.set({
+            sunnyUpdateCheck: { checkedAt: now, hasUpdate: hasUpdate, latestTag: latest }
+          }, function () {});
+          setUpdateIcon(hasUpdate, latest);
+        })
+        .catch(function () {
+          // 网络失败/限流：保持默认图标，不缓存失败结果（下次打开重试）
+          setUpdateIcon(false);
+        });
+    });
+  }
+
   initInputs();
   initMods();
   $('footer-version').textContent = 'v' + chrome.runtime.getManifest().version;
   loadMapData();
   initAlgoButtons();
+  checkUpdate();
 
   function initMods() {
     activeMods = { SV1: true };
@@ -561,7 +675,7 @@
             $('stat-od').setAttribute('max', '10');
             var currentV = parseFloat($('stat-od').value);
             if (isNaN(currentV) || currentV > 10) {
-              $('stat-od').value = Math.min(10, mapData ? (mapData.od >= 0 ? mapData.od : 8) : 8);
+              $('stat-od').value = Math.min(10, mapData ? (mapData.od >= 0 ? mapData.od : 9) : 9);
             }
             activeMods._odDirty = true;
           }
@@ -571,6 +685,7 @@
             activeMods.HO = mod === 'HO'; activeMods.IN = mod === 'IN';
             $('mod-ho').classList.toggle('active', activeMods.HO);
             $('mod-in').classList.toggle('active', activeMods.IN);
+            if (activeMods.IN) requestInData();
           }
         } else {
           activeMods[mod] = !activeMods[mod];
